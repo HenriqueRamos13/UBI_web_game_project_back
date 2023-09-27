@@ -78,6 +78,10 @@ server.register(fastifySocketIO, {
   cors: {
     origin: "*",
   },
+  connectionStateRecovery: {
+    maxDisconnectionDuration: 2 * 60 * 1000, // defaults to 2 minutes
+    skipMiddlewares: true
+  }
 });
 
 server.register(fastifyPrismaClient);
