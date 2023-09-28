@@ -1,6 +1,8 @@
 import { FastifyInstance } from "fastify";
 import { Socket } from "socket.io";
 
+const USERS_TO_START_GAME = 2
+
 enum AttributeToHit {
   aura = 'aura',
   life = 'life',
@@ -19,12 +21,6 @@ enum Aura {
   neutral = 'neutral'
 }
 
-enum HabilityUse {
-  night = 'night',
-  day = 'day',
-  both = 'both'
-}
-
 interface User {
   sockId: string;
   index: number;
@@ -35,11 +31,7 @@ interface User {
   alive: number;
   online: number;
   resurrected: number;
-  habilitiesToUse: number;
-  habilitiesPerTurn: number;
-  habilityUse: HabilityUse;
-  hability: Skill;
-  habilityTarget: string;
+  skillUsed: Skill | null;
 }
 
 interface Room {
@@ -61,14 +53,7 @@ function createNewUser(sockId: string, index: number) {
     alive: 1,
     online: 1,
     resurrected: 0,
-    habilitiesToUse: 0,
-    habilitiesPerTurn: 0,
-    habilityUse: "both" as HabilityUse,
-    hability: {
-      value: 0,
-      attributeToHit: "aura" as AttributeToHit,
-    },
-    habilityTarget: "",
+    skillUsed: null,
   }
 }
 
@@ -81,7 +66,6 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
 
       if (Socket.recovered) {
         // recovery was successful: socket.id, socket.rooms and socket.data were restored
-        // if the user is already in a room, change the online status to 1
         const room = games.find(room => room.users.find(user => user.sockId === Socket.id));
 
         if (room) {
@@ -105,7 +89,7 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
       let room: Room | null = null
 
       const roomsWithLessThan16Players = games.filter(
-        (room) => room.users.length < 16
+        (room) => room.users.length < USERS_TO_START_GAME
       );
 
       if (roomsWithLessThan16Players.length === 0) {
@@ -130,7 +114,6 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
         
         const room = games.find(room => room.users.find(user => user.sockId === Socket.id));
 
-        // change the user online status
         if (room) {
           room.users = room.users.map(user => {
             if (user.sockId === Socket.id) {
@@ -139,17 +122,14 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
             return user;
           });
 
-          // if all users are offline, delete the room
           if (room.users.filter(user => user.online === 1).length === 0) {
             games = games.filter(game => game.id !== room.id);
           }
 
-          // send the new room status to all users
           fastify.io.emit("users", room.users);
         }
       });
 
-      // send to users from the same room the new user
       fastify.io.emit("users", room.users);
 
       Socket.on("click-on-user", (data: {
@@ -158,14 +138,7 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
         const room = games.find(room => room.users.find(user => user.sockId === Socket.id));
 
         if (room) {
-          // find the user that was clicked and set his habilityTarget to the user that clicked and his habilityToUse to -1
-          room.users = room.users.map(user => {
-            if (user.sockId === data.target) {
-              user.habilityTarget = Socket.id;
-              user.habilitiesToUse -= 1;
-            }
-            return user;
-          });
+          console.log('click-on-user', data.target);
 
           fastify.io.emit("users", room.users);
         }

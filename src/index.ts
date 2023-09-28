@@ -12,7 +12,7 @@ import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import ws from "fastify-socket.io";
 import fastifyPrismaClient from "fastify-prisma-client";
-import fastifySocketIO from "./src/plugins/socket";
+import fastifySocketIO from "./plugins/socket";
 import { Server } from "socket.io";
 
 // if (!process.env.MONGO_URI) {
@@ -98,16 +98,7 @@ server.get<{
 });
 
 server.decorateRequest("someProp", "hello!");
-declare module "fastify" {
-  interface FastifyInstance {
-    // redis: FastifyRedis;
-    io: Server;
-  }
-  interface FastifyRequest {
-    // you must reference the interface and not the type
-    someProp: string;
-  }
-}
+
 server.get("/", async (request, reply) => {
   const { someProp } = request; // need to use declaration merging to add this prop to the request interface
   return someProp;
@@ -156,3 +147,14 @@ server.listen({ port: 3001 }, (err, address) => {
   }
   server.log.info(`Server listening at ${address}`);
 });
+
+declare module "fastify" {
+  interface FastifyInstance {
+    // redis: FastifyRedis;
+    io: Server;
+  }
+  interface FastifyRequest {
+    // you must reference the interface and not the type
+    someProp: string;
+  }
+}
