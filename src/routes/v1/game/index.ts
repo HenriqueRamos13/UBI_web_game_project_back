@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { Socket } from "socket.io";
 
-const USERS_TO_START_GAME = 2
+const USERS_TO_START_GAME = 3
 
 enum AttributeToHit {
   aura = 'aura',
@@ -76,7 +76,13 @@ function createNewUser(sockId: string, index: number) {
   }
 }
 
-function getARoom() {
+function getARoom(id?: string) {
+  if (id) {
+    const room = games.find(room => room.id === id);
+
+    return room as Room;
+  }
+
   const roomsNotFull = games.filter(
     (room) => room.users.length < USERS_TO_START_GAME
   );
@@ -93,9 +99,9 @@ function getARoom() {
     games.push(room);
 
     return room;
-  } else {
-    return roomsNotFull[0];
   }
+  
+  return roomsNotFull[0];
 }
 
 function findUserRoom(sockId: string) {
@@ -133,16 +139,16 @@ function filterUsersData(users: User[], aura: Aura) {
 }
 
 function startGame(Socket: Socket, room: Room) {
-  Socket.to(room.id).emit("start-game", room.users.map(user => ({
-      name: user.name, index: user.index, sockId: user.sockId
-    })
-  ));
-
-  room.users.map(user => {
-    Socket.emit("users-data", filterUsersData(room.users, user.aura));
-  })
-
   room.startedAt = new Date();
+  const {
+    users,
+    ...data
+  } = room
+  Socket.to(room.id).emit("start-game", data);
+  Socket.emit("start-game", data);
+  users.map(user => {
+    Socket.to(user.sockId).emit("users-data", filterUsersData(room.users, user.aura));
+  })
 }
 
 function isNight(room: Room) {
@@ -160,7 +166,7 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
         // recovery was successful: socket.id, socket.rooms and socket.data were restored
         const room = findUserRoom(Socket.id);
 
-        if (!room ) {
+        if (!room) {
           return Socket.disconnect(true);
         }
 
@@ -172,7 +178,7 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
         });
 
         room.users.map(user => {
-          Socket.emit("users-data", filterUsersData(room.users, user.aura));
+          Socket.to(user.sockId).emit("users-data", filterUsersData(room.users, user.aura));
         })
       } else {
         // new or unrecoverable session
@@ -182,6 +188,8 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
       //   Socket.disconnect(true);
       // }
 
+      // TODO verify if user is already in a game
+
       let room = getARoom();
 
       const user = createNewUser(Socket.id, room.users.length);
@@ -189,16 +197,18 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
       room.users.push(user);
 
       Socket.join(room.id);
+      Socket.emit("room", room.id);
 
       console.log(room.id)
       // enviando dados para o cliente
       Socket.emit("user", user);
       
-      Socket.to(room.id).emit("lobby", room.users.map(user => ({
-          name: user.name, index: user.index, sockId: user.sockId
-        })
-      ));
-      // fastify.io.emit("users", room.users);
+      Socket.to(room.id).emit("lobby", user);
+
+      room.users.map(user => {
+        Socket.to(user.sockId).emit("users-data", filterUsersData(room.users, user.aura));
+      })
+      Socket.emit("users-data", filterUsersData(room.users, user.aura));
 
       if (room.users.length === USERS_TO_START_GAME) {
         startGame(Socket, room);
@@ -212,7 +222,7 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
         if (room) {
           console.log('handle-skill', data.target);
           room.users.map(user => {
-            Socket.emit("users-data", filterUsersData(room.users, user.aura));
+            Socket.to(user.sockId).emit("users-data", filterUsersData(room.users, user.aura));
           })
           // fastify.io.emit("users", room.users);
         }
@@ -231,6 +241,11 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
               // send to all evil
               room.users.map(user => {
                 if (user.aura === Aura.evil) {
+                  Socket.emit("chat", {
+                    message: data.message,
+                    sockId: Socket.id,
+                    sender: sender!.name,
+                  });
                   Socket.to(user.sockId).emit("chat", {
                     message: data.message,
                     sockId: Socket.id,
@@ -242,11 +257,17 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
               Socket.emit("chat", {
                 message: "You can't talk now",
                 sockId: Socket.id,
+                sender: "room"
               });
             }
             return;
           }
 
+          Socket.emit("chat", {
+            message: data.message,
+            sockId: Socket.id,
+            sender: sender!.name,
+          });
           Socket.to(room.id).emit("chat", {
             message: data.message,
             sockId: Socket.id,
@@ -277,7 +298,7 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
           }
 
           room.users.map(user => {
-            Socket.emit("users-data", filterUsersData(room.users, user.aura));
+            Socket.to(user.sockId).emit("users-data", filterUsersData(room.users, user.aura));
           })
           // fastify.io.emit("users", room.users);
         }
