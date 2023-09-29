@@ -145,12 +145,16 @@ function startGame(Socket: Socket, room: Room) {
   room.startedAt = new Date();
 }
 
+function isNight(room: Room) {
+  return room.turn % 1 !== 0;
+}
+
 export default function (fastify: FastifyInstance, opts: any, done: any) {
   fastify.ready((err) => {
     if (err) throw err;
 
     fastify.io.on("connection", (Socket: Socket) => {
-      console.info("Socket connected!", Socket);
+      // console.info("Socket connected!", Socket);
 
       if (Socket.recovered) {
         // recovery was successful: socket.id, socket.rooms and socket.data were restored
@@ -186,6 +190,7 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
 
       Socket.join(room.id);
 
+      console.log(room.id)
       // enviando dados para o cliente
       Socket.emit("user", user);
       
@@ -212,6 +217,43 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
           // fastify.io.emit("users", room.users);
         }
       });
+
+      // create a chat
+      Socket.on("chat", (data: {message: string}) => {
+        const room = games.find(room => room.users.find(user => user.sockId === Socket.id));
+        
+
+        if (room) {
+          const sender = room.users.find(user => user.sockId === Socket.id);
+          // if turn is for example 0.5, 1.5 2.5
+          if (isNight(room)) {
+            if (sender?.aura === Aura.evil) {
+              // send to all evil
+              room.users.map(user => {
+                if (user.aura === Aura.evil) {
+                  Socket.to(user.sockId).emit("chat", {
+                    message: data.message,
+                    sockId: Socket.id,
+                    sender: sender.name,
+                  });
+                }
+              })
+            } else {
+              Socket.emit("chat", {
+                message: "You can't talk now",
+                sockId: Socket.id,
+              });
+            }
+            return;
+          }
+
+          Socket.to(room.id).emit("chat", {
+            message: data.message,
+            sockId: Socket.id,
+            sender: sender!.name,
+          });
+        }
+      })
 
       Socket.on("ping", () => {
         Socket.emit("pong");
