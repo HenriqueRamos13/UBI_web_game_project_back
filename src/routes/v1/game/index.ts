@@ -63,7 +63,7 @@ function createNewUser(sockId: string, index: number) {
     aura: "good" as Aura,
     life: 1,
     shield: 0,
-    class: "villager",
+    class: "rebel",
     alive: 1,
     online: 1,
     resurrected: 0,

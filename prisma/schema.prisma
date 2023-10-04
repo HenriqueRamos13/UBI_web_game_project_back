@@ -65,11 +65,27 @@ model Player {
   online Int
   role String
   ability Int 
-  team String //rebelde, governo ou solo, não tenho certeza se é necssário esse aqui
-  isJailed Int //a role "Interrogador" tem habilidade de prender um jogador a noite
-  isTrapped Int //a role "Desenvolvedor de Malware" pode colocar uma armadilha em um jogador
   vote Int //int? identifica o 'index' do jogador votado? 
   voteCount Int //identifica o peso do voto (1 ou 2)
+  roleVisibility Int //indica se a role esta revelada para os outros jogadores ou nao
+  team String //rebelde, governo ou solo, não tenho certeza se é necssário esse aqui
+
+  //especifico de roles, nao tenho certeza que é aqui que tem que estar
+  isJailed Int //indica se o jogador foi preso pelo 'interrogador'
+  isTrapped Int //indica se o 'desenvolvedor de malware' colocou sua armadilha
+  roleStolen String //a role "Ladra de Rua" rouba a role de outros jogadores
+  isDrugged Int //indica se o jogador foi drogado pela role 'traficante'
+  diedByOverdose Float //indica se o jogador drogado pelo 'traficante' morre ou nao, float pq é 50% de chance de morrer mas nao sei se deve ser float ou int
+  injectionAttack Int //habilidade do 'neurohacker'
+  injectionDefense Int //habilidade do 'neurohacker'
+  injectionReceived Int //identifica se recebeu uma injecao
+  vigilanteReveal Int //indica uma das habilidades do 'robo vigilante' 
+  vigilanteKill Int //indica a outra habilidade do 'robo vigilante'
+  vigilanteAbilityUsed Int //indica se o 'robo vigilante' usou uma das funções durante o dia, reseta no final do dia. se sim, desabilita a outra habilidade até o dia seguinte
+  card1 Int //indica a habilidade da role 'contrabandista de dados'
+  card2 Int //indica a habilidade da role 'contrabandista de dados'
+  cardReceived Int //indica se recebeu a habilidade do 'contrabandista de dados'
+
   //attackedBy ?
   //observedPlayers Int[] //a role "Coletor de Dados" pode observar dois jogadores. pensei aqui em um array para guardar o index dos dois jogadores observados, mas nao sei se podemos usar arrays aqui, VERIFICAR DEPOIS!!!!
 
