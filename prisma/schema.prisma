@@ -24,6 +24,12 @@ model Profile {
   bio    String?
   user   User    @relation(fields: [userId], references: [id])
   userId String     @unique
+  xp Int 
+  gender String //feminino, masculino, outro(?), influencia no avatar 
+  wins Int
+  loses Int
+  quits Int
+  deaths Int
 }
 
 model User {
@@ -33,4 +39,38 @@ model User {
   password String
   posts   Post[]
   profile Profile?
+  createdAt DateTime @default(now())
+}
+
+model friendList {
+  id String @id @default(uuid())
+  fpId String
+
+}
+
+model Sala {
+  id String @id @default(uuid())
+  turn Int
+  startedAt DateTime @default(now())
+}
+
+model Player {
+  id String @id @default(uuid())
+  index Int
+  aura String 
+  life Int
+  shield Int
+  alive Int
+  revived Int
+  online Int
+  role String
+  ability Int 
+  team String //rebelde, governo ou solo
+  isJailed Int //a role "Interrogador" tem habilidade de prender um jogador a noite
+  isTrapped Int //a role "Desenvolvedor de Malware" pode colocar uma armadilha em um jogador
+  vote Int //int? identifica o 'index' do jogador votado? 
+  voteCount Int //identifica o peso do voto (1 ou 2)
+  //attackedBy ?
+  //observedPlayers Int[] //a role "Coletor de Dados" pode observar dois jogadores. pensei aqui em um array para guardar o index dos dois jogadores observados, mas nao sei se podemos usar arrays aqui, VERIFICAR DEPOIS!!!!
+
 }
