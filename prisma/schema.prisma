@@ -65,7 +65,7 @@ model Player {
   online Int
   role String
   ability Int 
-  team String //rebelde, governo ou solo
+  team String //rebelde, governo ou solo, não tenho certeza se é necssário esse aqui
   isJailed Int //a role "Interrogador" tem habilidade de prender um jogador a noite
   isTrapped Int //a role "Desenvolvedor de Malware" pode colocar uma armadilha em um jogador
   vote Int //int? identifica o 'index' do jogador votado? 
