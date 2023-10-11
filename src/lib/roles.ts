@@ -16,7 +16,7 @@ const ROLES: Record<string, Partial<Role>> = {
     aura: Aura.GOOD,
     team: Team.REBEL,
     description:
-      "The Cyber ​​Brute is a rebel agent with unmatched strength and resilience. Every night he can protect another player. Due to its unparalleled strength, the Cyber ​​Brute survives the first attack, but is unable to resist the follow-up. Automatically self protects every night.",
+      "The Cyber Brute is a formidable rebel agent known for their exceptional strength and resilience. As a Cyber Brute, you have the ability to protect a fellow player each night. Thanks to your unmatched strength, the Cyber Brute can withstand the first attack directed at them, but they are unable to defend against subsequent attacks. Additionally, the Cyber Brute automatically protects themselves every night.",
     canTalkNight: false,
   },
 
@@ -25,7 +25,7 @@ const ROLES: Record<string, Partial<Role>> = {
     aura: Aura.GOOD,
     team: Team.REBEL,
     description:
-      "A former government detective who, after being fired, decided to dedicate his time to help the rebellion. He uses his knowledge and technologies acquired during his years of servitude to the totalitarian government to discover the true identity of a player by invading his cyber data. Can select a player overnight to reveal their role.",
+      "A former government detective, who, after facing termination, chose to dedicate their skills to the rebel cause. Leveraging their acquired knowledge and technologies from years of serving the totalitarian government, the Detective specializes in uncovering the true identity of a player by hacking into their cyber data. Each night, the Detective can select a player to reveal their role.",
     canTalkNight: false,
   },
 

@@ -112,7 +112,8 @@ model Player {
   alive                           Boolean        @default(true)
   revived                         Boolean        @default(false)
   online                          Boolean        @default(true)
-  role                            PlayerRole?
+  role                            Role?          @relation(fields: [roleId], references: [id])
+  roleId                          String?
   votesReceived                   Int            @default(0)
   voteWeight                      Int            @default(1) //peso do voto
   roleVisibility                  Boolean        @default(false) //indica se a role esta revelada para os outros jogadores ou nao
@@ -131,21 +132,6 @@ model Player {
   attackedBy                      Int? //index do time ou aura de quem matou
 }
 
-model PlayerRole {
-  id           String  @id @default(uuid())
-  aura         Aura
-  team         Team
-  canTalkNight Boolean
-  description  String
-  name         String
-
-  injectionDef Int?
-  injectionAtk Int?
-
-  player   Player @relation(fields: [playerId], references: [id])
-  playerId String @unique
-}
-
 model Role {
   id           String  @id @default(uuid())
   aura         Aura
@@ -156,4 +142,5 @@ model Role {
 
   injectionDef Int?
   injectionAtk Int?
+  players      Player[]
 }
