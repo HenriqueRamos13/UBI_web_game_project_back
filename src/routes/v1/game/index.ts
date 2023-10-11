@@ -13,6 +13,22 @@ import {
 
 const PLAYERS_TO_START_GAME = 3;
 
+enum SocketEmitEvents {
+  PONG = "pong",
+  ROOM = "room",
+}
+
+enum SocketOnEvents {
+  CONNECTION = "connection",
+  PING = "ping",
+  HANDLE_SKILL = "handle-skill",
+  VOTE = "vote",
+  CHAT = "chat",
+  CHAT_NIGHT = "chat-night",
+  CHAT_TO = "chat-to",
+  DISCONNECT = "disconnect",
+}
+
 async function createNewPlayer(
   fastify: FastifyInstance,
   roomId: string,
@@ -110,7 +126,7 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
   fastify.ready((err) => {
     if (err) throw err;
 
-    fastify.io.on("connection", async (Socket: Socket) => {
+    fastify.io.on(SocketOnEvents.CONNECTION, async (Socket: Socket) => {
       const profile = await fastify.prisma.profile.findUnique({
         where: {
           id: Socket.request.headers["x-user-id"] as string,
@@ -128,26 +144,29 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
 
       const player = await createNewPlayer(fastify, room.id, profile!.id);
       Socket.join(room.id);
-      Socket.emit("room", room.id);
+      Socket.emit(SocketEmitEvents.ROOM, room.id);
       if (room.players.length === PLAYERS_TO_START_GAME) {
         startGame(Socket, room);
       }
 
-      Socket.on("handle-skill", (data: { target: string }) => {});
+      Socket.on(SocketOnEvents.HANDLE_SKILL, (data: { target: string }) => {});
 
-      Socket.on("vote", (data: { target: string }) => {});
+      Socket.on(SocketOnEvents.VOTE, (data: { target: string }) => {});
 
-      Socket.on("chat", (data: { message: string }) => {});
+      Socket.on(SocketOnEvents.CHAT, (data: { message: string }) => {});
 
-      Socket.on("chat-night", (data: { message: string }) => {});
+      Socket.on(SocketOnEvents.CHAT_NIGHT, (data: { message: string }) => {});
 
-      Socket.on("chat-to", (data: { message: string; to: string }) => {});
+      Socket.on(
+        SocketOnEvents.CHAT_TO,
+        (data: { message: string; to: string }) => {}
+      );
 
-      Socket.on("ping", () => {
-        Socket.emit("pong");
+      Socket.on(SocketOnEvents.PING, () => {
+        Socket.emit(SocketEmitEvents.PONG);
       });
 
-      Socket.on("disconnect", (data: any) => {});
+      Socket.on(SocketOnEvents.DISCONNECT, (data: any) => {});
     });
   });
 
