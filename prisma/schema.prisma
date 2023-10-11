@@ -8,102 +8,152 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Post {
-  id        Int      @id @default(autoincrement())
+// model Post {
+//   id        Int      @id @default(autoincrement())
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+//   title     String   @db.VarChar(255)
+//   content   String?
+//   published Boolean  @default(false)
+//   author    User     @relation(fields: [authorId], references: [id])
+//   authorId  String
+// }
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  profile   Profile?
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  title     String   @db.VarChar(255)
-  content   String?
-  published Boolean  @default(false)
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  String
 }
 
 model Profile {
-  id     Int     @id @default(autoincrement())
-  bio    String?
-  user   User    @relation(fields: [userId], references: [id])
-  userId String     @unique
-  xp Int 
-  gender String //feminino, masculino, outro(?), influencia no avatar 
-  wins Int
-  loses Int
-  quits Int
-  deaths Int
-}
-
-model User {
   id      String   @id @default(uuid())
-  email   String   @unique
-  name    String   
-  password String
-  posts   Post[]
-  profile Profile?
+  bio     String?
+  user    User     @relation(fields: [userId], references: [id])
+  userId  String   @unique
+  xp      Int
+  gender  String //feminino, masculino, outro(?), influencia no avatar 
+  wins    Int
+  loses   Int
+  quits   Int
+  deaths  Int
+  players Player[]
+}
+
+enum Aura {
+  GOOD
+  EVIL
+  UNKNOWN
+}
+
+enum Turn {
+  LOBBY
+  DAY
+  VOTE
+  NIGHT
+}
+
+enum Team {
+  GOVERNMENT
+  REBEL
+  SOLO
+}
+
+model Room {
+  id         String    @id @default(uuid())
+  turn       Turn      @default(LOBBY) //dia discussao votacao ou noite
+  turnNumber Int       @default(0) //numero do turno
+  startedAt  DateTime?
+  hasVote    Boolean //se tem votaçao no dia ou nao
+  voteAnon   Boolean //se os votos do dia sao anonimos ou nao
+  finished   Boolean
+  players    Player[]
+  messages   Message[]
+}
+
+model Message {
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
+  content   String   @db.VarChar(255)
+  room      Room     @relation(fields: [roomId], references: [id])
+  roomId    String
+  author    Player   @relation(fields: [authorId], references: [id])
+  authorId  String
 }
 
-model FriendList {
-  id String @id @default(uuid())
-  fpId String
-
+enum EliminatedBy {
+  VOTE
+  ATTACK
+  OVERDOSE
 }
 
-model Sala {
-  id String @id @default(uuid())
-  turn Int
-  startedAt DateTime @default(now())
-  voting Int //se tem votaçao no dia ou nao
-  voteAnon Int //se os votos do dia sao anonimos ou nao
+enum InjectionType {
+  ATTACK
+  DEFENSE
+}
+
+enum PotionType {
+  RED
+  BLACK
 }
 
 model Player {
-  id String @id @default(uuid())
-  index Int
-  aura String 
-  life Int
-  shield Int
-  alive Int
-  revived Int
-  online Int
-  role String
-  ability Int 
-  vote Int //index do jogador votado
-  voteValue Int //peso do voto
-  roleVisibility Int //indica se a role esta revelada para os outros jogadores ou nao
-  team String //rebelde, governo ou solo, não tenho certeza se é necssário esse aqui
-  playerSelected Int //indica o index do jogador selecionado (importante pra funções que usam habilidades em outros jogadores)
-  elimination String //se foi eliminado por votação ou ataque
-  //especifico de roles, nao tenho certeza que é aqui que tem que estar
-  isJailed Int //indica se o jogador foi preso pelo 'interrogador'
-  isTrapped Int //indica se o 'desenvolvedor de malware' colocou sua armadilha
-  roleStolen String //a role "Ladra de Rua" rouba a role de outros jogadores
-  isDrugged Int //indica se o jogador foi drogado pela role 'traficante'
-  diedByOverdose Float //indica se o jogador drogado pelo 'traficante' morre ou nao, float pq é 50% de chance de morrer mas nao sei se deve ser float ou int
-  injectionAttack Int //habilidade do 'neurohacker'
-  injectionDefense Int //habilidade do 'neurohacker'
-  injectionReceived Int //identifica se recebeu uma injecao
-  vigilanteReveal Int //indica uma das habilidades do 'robo vigilante' 
-  vigilanteKill Int //indica a outra habilidade do 'robo vigilante'
-  vigilanteAbilityUsed Int //indica se o 'robo vigilante' usou uma das funções durante o dia, reseta no final do dia. se sim, desabilita a outra habilidade até o dia seguinte
-  card1 Int //indica a habilidade da role 'contrabandista de dados'
-  card2 Int //indica a habilidade da role 'contrabandista de dados'
-  cardReceived Int //indica se recebeu a habilidade do 'contrabandista de dados'
-  droneProjectile Int //indica a quantos projeteis o 'operador de drones' tem
-  droneTarget Int //guarda o index do jogador alvo do 'operador de drones'
+  id                              String         @id @default(uuid())
+  room                            Room           @relation(fields: [roomId], references: [id])
+  roomId                          String
+  profile                         Profile        @relation(fields: [profileId], references: [id])
+  profileId                       String
+  messages                        Message[]
+  index                           Int
+  life                            Int            @default(1)
+  shield                          Int            @default(0)
+  alive                           Boolean        @default(true)
+  revived                         Boolean        @default(false)
+  online                          Boolean        @default(true)
+  role                            PlayerRole?
+  votesReceived                   Int            @default(0)
+  voteWeight                      Int            @default(1) //peso do voto
+  roleVisibility                  Boolean        @default(false) //indica se a role esta revelada para os outros jogadores ou nao
+  elimination                     EliminatedBy? //se foi eliminado por votação ou ataque
+  isJailed                        Boolean        @default(false) //indica se o jogador foi preso pelo 'interrogador'
+  isTrapped                       Boolean        @default(false) //indica se o 'desenvolvedor de malware' colocou sua armadilha
+  roleStolen                      Boolean        @default(false) //a role "Ladra de Rua" rouba a role de outros jogadores
+  isDrugged                       Boolean        @default(false) //indica se o jogador foi drogado pela role 'traficante'
+  druggedBy                       Boolean        @default(false) //indica se o jogador foi drogado pela role 'traficante'
+  injected                        InjectionType?
+  voteProtection                  Boolean        @default(false) //impede de ser eliminado por votação
+  roleVisibilityProtectedWhenDead Boolean        @default(false) //esconde a role quando for eliminado
+  corrupted                       Boolean        @default(false) //corrompe e impede de falar e votar
+  bhTarget                        Boolean        @default(false) //guarda o index do alvo da role 'caçador de recompensas'
+  potionReceived                  PotionType?
+  attackedBy                      Int? //index do time ou aura de quem matou
+}
 
-  microRobots Int //quantos robos o 'engenheiro de nanotech' tem
-  disguised Int //disfarça a role 
-  voteProtection Int //impede de ser eliminado por votação
-  roleVisibilityDead Int //esconde a role quando for eliminado
-  corrupted Int //corrompe e impede de falar e votar
+model PlayerRole {
+  id           String  @id @default(uuid())
+  aura         Aura
+  team         Team
+  canTalkNight Boolean
+  description  String
+  name         String
 
-  bhTarget Int //guarda o index do alvo da role 'caçador de recompensas'
-  
-  //**
-  redPotion Int //poção vermelha do 'comerciante ilegal'
-  blackPotion Int //poção preta do 'comerciante ilegal'
-  
-  attackedBy Int //index do time ou aura de quem matou
-  //observedPlayers Int[] //a role "Coletor de Dados" pode observar dois jogadores. pensei aqui em um array para guardar o index dos dois jogadores observados, mas nao sei se podemos usar arrays aqui
+  injectionDef Int?
+  injectionAtk Int?
 
+  player   Player @relation(fields: [playerId], references: [id])
+  playerId String @unique
+}
+
+model Role {
+  id           String  @id @default(uuid())
+  aura         Aura
+  team         Team
+  canTalkNight Boolean
+  description  String
+  name         String
+
+  injectionDef Int?
+  injectionAtk Int?
 }

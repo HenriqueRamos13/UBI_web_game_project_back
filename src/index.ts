@@ -80,11 +80,11 @@ server.register(fastifySocketIO, {
   },
   connectionStateRecovery: {
     maxDisconnectionDuration: 2 * 60 * 1000, // defaults to 2 minutes
-    skipMiddlewares: true
-  }
+    skipMiddlewares: true,
+  },
 });
 
-// server.register(fastifyPrismaClient);
+server.register(fastifyPrismaClient);
 
 server.register(require("./routes/v1/game"), { prefix: "/v1" });
 
@@ -93,8 +93,8 @@ server.get<{
     id: string;
   };
 }>("/user/:id", async function (req, reply) {
-    // pegar dados do usuario com id x que vem em req.params.id
-    // return await 
+  // pegar dados do usuario com id x que vem em req.params.id
+  // return await
 });
 
 server.decorateRequest("someProp", "hello!");
