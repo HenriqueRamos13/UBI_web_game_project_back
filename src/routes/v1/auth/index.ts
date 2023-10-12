@@ -26,12 +26,12 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
       const isMatch = await bcrypt.compare(password, user.password);
 
       if (isMatch) {
-        const token = jwt.sign(
+        const token = await jwt.sign(
           {
             id: user.id,
             profileId: user.profile?.id,
           },
-          process.env.JWT_SECRET,
+          process.env.JWT_SECRET!,
           {
             expiresIn: "30d",
           }
@@ -55,7 +55,7 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
     const token = request.cookies.token;
 
     if (token) {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!);
 
       const user = await fastify.prisma.user.findUnique({
         where: {

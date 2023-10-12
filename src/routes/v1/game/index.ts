@@ -134,10 +134,13 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
         Socket.disconnect();
         return;
       }
-      const decoded: {
+      const decoded = (await jwt.verify(
+        Socket.handshake.query.token as string,
+        process.env.JWT_SECRET!
+      )) as {
         id: string;
         profileId: string;
-      } = jwt.verify(Socket.handshake.query.token, process.env.JWT_SECRET);
+      };
       if (!decoded) {
         Socket.disconnect();
         return;
