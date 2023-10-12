@@ -37,12 +37,18 @@ async function createNewPlayer(
   roomId: string,
   profileId: string
 ) {
+  const playersInRoom = await fastify.prisma.player.count({
+    where: {
+      roomId: roomId,
+    },
+  });
+
   return await fastify.prisma.player
     .create({
       data: {
         roomId: roomId,
         profileId: profileId,
-        index: 0,
+        index: playersInRoom + 1,
       },
     })
     .then((player) => {
@@ -71,7 +77,10 @@ async function getARoom(fastify: FastifyInstance) {
       },
     })
     .then((rooms) => {
-      if (rooms.length === 0) {
+      if (
+        rooms.length === 0 ||
+        rooms[0].players.length >= PLAYERS_TO_START_GAME
+      ) {
         return fastify.prisma.room
           .create({
             data: {
@@ -120,10 +129,23 @@ async function findPlayerRoom(fastify: FastifyInstance, profileId: string) {
     });
 }
 
-function startGame(Socket: Socket, room: Room) {
-  // TODO: set roles for all players then emit to all players
-  // ok
+async function getRoomPlayers(fastify: FastifyInstance, roomId: string) {
+  return await fastify.prisma.player
+    .findMany({
+      where: {
+        roomId: roomId,
+      },
+    })
+    .then((players) => {
+      return players;
+    });
 }
+
+async function startGame(
+  fastify: FastifyInstance,
+  Socket: Socket,
+  room: Room
+) {}
 
 export default function (fastify: FastifyInstance, opts: any, done: any) {
   fastify.ready((err) => {
@@ -151,9 +173,10 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
           id: decoded.profileId,
         },
       });
-      // TODO verify if user is already in a game
-      const playerRoom = await findPlayerRoom(fastify, profile!.id);
+
       let room;
+
+      const playerRoom = await findPlayerRoom(fastify, profile!.id);
 
       if (playerRoom) {
         room = playerRoom;
@@ -162,10 +185,16 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
       }
 
       const player = await createNewPlayer(fastify, room.id, profile!.id);
+
       Socket.join(room.id);
       Socket.emit(SocketEmitEvents.ROOM, room.id);
-      if (room.players.length === PLAYERS_TO_START_GAME) {
-        startGame(Socket, room);
+
+      const players = await getRoomPlayers(fastify, room.id);
+
+      Socket.emit(SocketEmitEvents.PLAYERS, players);
+
+      if (players.length === PLAYERS_TO_START_GAME) {
+        await startGame(fastify, Socket, room);
       }
 
       Socket.on(SocketOnEvents.HANDLE_SKILL, (data: { target: string }) => {});

@@ -133,14 +133,12 @@ model Player {
 }
 
 model Role {
-  id           String  @id @default(uuid())
+  id           String   @id @default(uuid())
   aura         Aura
   team         Team
   canTalkNight Boolean
   description  String
   name         String
-
-  injectionDef Int?
-  injectionAtk Int?
+  image        String?
   players      Player[]
 }
