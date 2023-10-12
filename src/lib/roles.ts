@@ -239,6 +239,7 @@ const ROLES: Record<string, Partial<Role>> = {
     team: Team.GOVERNMENT,
     description: "The Government Fan is a mysterious figure among government agents. They are initially considered part of the government team and do not contribute to the team's victory condition until they are targeted for elimination. When targeted, they become a regular government agent with no special abilities. Once during the game, they can choose to reveal their role to another player.",
     canTalkNight: false,
+    image: "https://i.imgur.com/Eu8xVHQ.png",
  }
 */
 
@@ -249,6 +250,7 @@ const ROLES: Record<string, Partial<Role>> = {
     description:
       "The Government Agent is an ordinary government operative with no special abilities.",
     canTalkNight: true,
+    image: "https://i.imgur.com/T6PxxAZ.png",
   },
 
   instigator: {
@@ -258,6 +260,7 @@ const ROLES: Record<string, Partial<Role>> = {
     description:
       "The Instigator Agent has the ability to reveal another player's role to all the other players once per game. On the day the Instigator reveals a player, there will be no voting.",
     canTalkNight: true,
+    image: "https://i.imgur.com/dmjnpGe.png",
   },
 
   cybersecuritySpecialist: {
@@ -267,6 +270,7 @@ const ROLES: Record<string, Partial<Role>> = {
     description:
       "The Cybersecurity Specialist has the ability to infiltrate any system. Once per game, the specialist can use their ability to infiltrate the voting system, making the day's vote secret and doubling the value of all their team's votes.",
     canTalkNight: true,
+    image: "https://i.imgur.com/8WRSolV.png",
   },
 
   blackhatHacker: {
@@ -276,6 +280,7 @@ const ROLES: Record<string, Partial<Role>> = {
     description:
       "A morally ambiguous hacker. Once per game, during the voting phase, the hacker can hack into the voting system and prevent a player from being eliminated by the other players.",
     canTalkNight: true,
+    image: "https://i.imgur.com/DHwCiuP.png",
   },
 
   dataManipulator: {
@@ -285,6 +290,7 @@ const ROLES: Record<string, Partial<Role>> = {
     description:
       "This agent is a specialist altering and manipulating data. Twice per game, they can activate their ability during the day, making the roles of all players who die on the following night visible only to the government agents' team. For the other players, the roles remain hidden.",
     canTalkNight: true,
+    image: "https://i.imgur.com/0YqIkuO.png",
   },
 
   corruptor: {
@@ -294,6 +300,7 @@ const ROLES: Record<string, Partial<Role>> = {
     description:
       "This government agent specializes in causing havoc by corrupting one player from opposing teams each night. Each night they can select a player to corrupt, causing their systems to glitch and preventing them from talking and voting the next day. The glitched player will die at the end of the day.",
     canTalkNight: true,
+    image: "https://i.imgur.com/isSBwWF.png",
   },
 
   disruptor: {
@@ -303,6 +310,7 @@ const ROLES: Record<string, Partial<Role>> = {
     description:
       "This agent possesses the unique ability to manipulate the game dynamics. Twice per game, they can trigger an ability during the day, swapping the positions of all players in the match. This action not only makes the day's voting secret but also wipes all messages from the chat.",
     canTalkNight: true,
+    image: "https://i.imgur.com/t2t3spd.png",
   },
 
   //solo vote roles
@@ -313,6 +321,7 @@ const ROLES: Record<string, Partial<Role>> = {
     description:
       "Embracing chaos and rejecting all forms of authority, the anarchist's primary goal is to incite disorder within the group. They achieve victory if the other players vote and eliminate them during the day, ending the game",
     canTalkNight: false,
+    image: "https://i.imgur.com/fTWmiwb.png",
   },
 
   bountyHunter: {
@@ -322,6 +331,7 @@ const ROLES: Record<string, Partial<Role>> = {
     description:
       "The bounty hunter has infiltrated the rebellion with a specific mission: to capture a designated player assigned at the start of the game. Their objective is to persuade the other players to vote and eliminate their target. If successful, the game ends, and the bounty hunter wins.",
     canTalkNight: false,
+    image: "https://i.imgur.com/cv9UhSn.png",
   },
 
   //solo kill roles
@@ -332,6 +342,7 @@ const ROLES: Record<string, Partial<Role>> = {
     description:
       "The Serial Killer is a disturbed and psychotic figure infiltrated into the group with the goal of eliminating all players. Every night, they can choose a player to stab.",
     canTalkNight: false,
+    image: "https://i.imgur.com/QwE0MKU.png",
   },
 
   illegalTrader: {
@@ -341,6 +352,7 @@ const ROLES: Record<string, Partial<Role>> = {
     description:
       "The Illegal Trader is a specialist in illicit chemicals and poisons. They possess two dangerous mixtures, one red and one black, and every night they can give one of each to two players. Both players are warned that they may die at the end of the day, but only the player who received the black substance will die. The red substance becomes fatal on the second consumption. Players do not know which substance they received. The game ends if the Illegal Trader is the last player alive.",
     canTalkNight: false,
+    image:"https://i.imgur.com/dOAtQlM.png",
   },
 
   /*solo kill roles de converter, confirmar se vai ter no jogo ou n depois
@@ -350,6 +362,7 @@ const ROLES: Record<string, Partial<Role>> = {
     team: Team.SOLO,
     description: "In the dystopian and totalitarian universe of Neonova, where solitude is your only ally, the Lone Hacker sets out on a new adventure to form an alliance with the rebels and seize control of the rebellion. While without an accomplice, the hacker can attempt to convert someone during the night. If the target is a government agent, they die. If it's a player from the rebel team, they are converted. Once converted, the two players can vote at night to eliminate anyone they choose. The Lone Hacker wins if they are the last survivor, if their accomplice is the last survivor, or if both are alive. If the accomplice dies, they can select another player to convert.",
     canTalkNight: false,
+    image: "https://i.imgur.com/T9gVBSf.png",
   },
 
   accomplice: {
@@ -358,6 +371,7 @@ const ROLES: Record<string, Partial<Role>> = {
     team: Team.SOLO,
     description: "Rebel Agent converted by the Lone Hacker. Their goal is to eliminate all players and seize control of the rebellion with their ally.",
     canTalkNight: false,
+    image: "https://i.imgur.com/92IFlpK.png",
   },
 
   biohacker: {
@@ -366,6 +380,7 @@ const ROLES: Record<string, Partial<Role>> = {
     team: Team.SOLO,
     description: "The Biohacker is an individual with the goal of biologically modifying as many people as possible and becoming their leader. Every night, they can select a player to biologically modify, that player will be converted on the following night. Each converted player can, in turn, select another player for conversion. The biohacker cannot convert government agents or solo voters. They win if all living players are converted.",
     canTalkNight: false,
+    image: "https://i.imgur.com/MbvKeC3.png",
   },
 
   biomodified: {
