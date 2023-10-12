@@ -22,7 +22,6 @@ generator client {
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
-  name      String
   password  String
   profile   Profile?
   createdAt DateTime @default(now())
@@ -31,6 +30,7 @@ model User {
 model Profile {
   id      String   @id @default(uuid())
   bio     String?
+  name    String
   user    User     @relation(fields: [userId], references: [id])
   userId  String   @unique
   xp      Int
@@ -106,6 +106,7 @@ model Player {
   roomId                          String
   profile                         Profile        @relation(fields: [profileId], references: [id])
   profileId                       String
+  socketId                        String?
   messages                        Message[]
   index                           Int
   life                            Int            @default(1)
@@ -138,7 +139,7 @@ model Role {
   aura         Aura
   team         Team
   canTalkNight Boolean
-  description  String
+  description  String   @db.VarChar(3000)
   name         String
   image        String?
   players      Player[]

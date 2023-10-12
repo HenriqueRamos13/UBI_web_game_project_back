@@ -21,11 +21,11 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
       data: {
         email: email,
         password: hash,
-        name: name,
         profile: {
           create: {
             xp: 0,
             gender,
+            name,
           },
         },
       },

@@ -352,7 +352,7 @@ const ROLES: Record<string, Partial<Role>> = {
     description:
       "The Illegal Trader is a specialist in illicit chemicals and poisons. They possess two dangerous mixtures, one red and one black, and every night they can give one of each to two players. Both players are warned that they may die at the end of the day, but only the player who received the black substance will die. The red substance becomes fatal on the second consumption. Players do not know which substance they received. The game ends if the Illegal Trader is the last player alive.",
     canTalkNight: false,
-    image:"https://i.imgur.com/dOAtQlM.png",
+    image: "https://i.imgur.com/dOAtQlM.png",
   },
 
   /*solo kill roles de converter, confirmar se vai ter no jogo ou n depois
