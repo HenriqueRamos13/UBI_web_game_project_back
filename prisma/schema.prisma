@@ -35,10 +35,10 @@ model Profile {
   userId  String   @unique
   xp      Int
   gender  String //feminino, masculino, outro(?), influencia no avatar 
-  wins    Int
-  loses   Int
-  quits   Int
-  deaths  Int
+  wins    Int?     @default(0)
+  loses   Int?     @default(0)
+  quits   Int?     @default(0)
+  deaths  Int?     @default(0)
   players Player[]
 }
 

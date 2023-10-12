@@ -10,12 +10,15 @@ import {
   Turn,
   User,
 } from "@prisma/client";
+import * as jwt from "jsonwebtoken";
 
 const PLAYERS_TO_START_GAME = 3;
 
 enum SocketEmitEvents {
   PONG = "pong",
   ROOM = "room",
+  PLAYERS = "players",
+  player = "player",
 }
 
 enum SocketOnEvents {
@@ -127,9 +130,22 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
     if (err) throw err;
 
     fastify.io.on(SocketOnEvents.CONNECTION, async (Socket: Socket) => {
+      if (!Socket.handshake.query || !Socket.handshake.query.token) {
+        Socket.disconnect();
+        return;
+      }
+      const decoded: {
+        id: string;
+        profileId: string;
+      } = jwt.verify(Socket.handshake.query.token, process.env.JWT_SECRET);
+      if (!decoded) {
+        Socket.disconnect();
+        return;
+      }
+
       const profile = await fastify.prisma.profile.findUnique({
         where: {
-          id: Socket.request.headers["x-user-id"] as string,
+          id: decoded.profileId,
         },
       });
       // TODO verify if user is already in a game

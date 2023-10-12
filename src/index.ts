@@ -87,6 +87,8 @@ server.register(fastifySocketIO, {
 server.register(fastifyPrismaClient);
 
 server.register(require("./routes/v1/game"), { prefix: "/v1" });
+server.register(require("./routes/v1/register"), { prefix: "/v1" });
+server.register(require("./routes/v1/auth"), { prefix: "/v1" });
 
 server.get<{
   Params: {
