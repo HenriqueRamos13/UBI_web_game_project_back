@@ -38,4 +38,6 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
       reply.code(400).send({ message: "User not created" });
     }
   });
+
+  done();
 }

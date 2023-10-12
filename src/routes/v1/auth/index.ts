@@ -83,4 +83,6 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
 
     reply.code(200).send({ message: "Logged out" });
   });
+
+  done();
 }
