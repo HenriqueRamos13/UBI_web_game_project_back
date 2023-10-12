@@ -48,7 +48,7 @@ const serverOpts =
 const server = fastify(serverOpts);
 
 server.register(cors, {
-  origin: "*",
+  origin: "http://localhost:3000",
   preflightContinue: true,
   credentials: true,
 });

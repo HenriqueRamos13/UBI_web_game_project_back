@@ -12,7 +12,7 @@ import {
 } from "@prisma/client";
 import * as jwt from "jsonwebtoken";
 
-const PLAYERS_TO_START_GAME = 3;
+const PLAYERS_TO_START_GAME = 7;
 
 enum SocketEmitEvents {
   PONG = "pong",
@@ -141,23 +141,187 @@ async function getRoomPlayers(fastify: FastifyInstance, roomId: string) {
     });
 }
 
+function getRandomInt(max: number) {
+  return Math.floor(Math.random() * max);
+}
+
 async function startGame(
   fastify: FastifyInstance,
   Socket: Socket,
-  room: Room
-) {}
+  room: Room,
+  players: Player[]
+) {
+  const soloRoles = await fastify.prisma.role.findMany({
+    where: {
+      team: Team.SOLO,
+    },
+  });
+
+  const governmentRoles = await fastify.prisma.role.findMany({
+    where: {
+      team: Team.GOVERNMENT,
+    },
+  });
+
+  const rebelRoles = await fastify.prisma.role.findMany({
+    where: {
+      team: Team.REBEL,
+    },
+  });
+
+  // sempre vai ter 2 solos
+  // sempre vai ter um governo a mais do que rebeldes
+
+  const selectedSoloRoles: Role[] = [];
+  const selectedGovernmentRoles: Role[] = [];
+  const selectedRebelRoles: Role[] = [];
+
+  for (let i = 0; i < PLAYERS_TO_START_GAME; i++) {
+    if (i < 2) {
+      const randomSolo = soloRoles[getRandomInt(soloRoles.length)];
+      selectedSoloRoles.push(randomSolo);
+    }
+    if (i >= 2) {
+      if (selectedGovernmentRoles.length < selectedRebelRoles.length) {
+        const randomGovernment =
+          governmentRoles[getRandomInt(governmentRoles.length)];
+        selectedGovernmentRoles.push(randomGovernment);
+      } else {
+        const randomRebel = rebelRoles[getRandomInt(rebelRoles.length)];
+        selectedRebelRoles.push(randomRebel);
+      }
+    }
+  }
+
+  const roles = [
+    ...selectedSoloRoles,
+    ...selectedGovernmentRoles,
+    ...selectedRebelRoles,
+  ];
+
+  const shuffledRoles = roles.sort(() => Math.random() - 0.5);
+
+  const playersWithRoles = players.map((player, index) => {
+    return {
+      ...player,
+      roleId: shuffledRoles[index],
+    };
+  });
+
+  const updatedPlayers = await fastify.prisma.player.updateMany({
+    where: {
+      id: {
+        in: playersWithRoles.map((player) => player.id),
+      },
+    },
+    data: playersWithRoles.map((player) => ({
+      roleId: player.roleId.id,
+    })),
+  });
+
+  return await nextTurn(fastify, room.id);
+}
+
+async function nextTurn(fastify: FastifyInstance, roomId: string) {
+  // verify the acctual turn then increment it
+  // if is LOBBY go to NIGHT and set startedAt to now
+  // if is NIGHT go to DAY
+  // if is DAY go to VOTE
+
+  const room = await fastify.prisma.room.findUnique({
+    where: {
+      id: roomId,
+    },
+  });
+
+  if (!room) {
+    return;
+  }
+
+  if (room.turn === Turn.LOBBY) {
+    await fastify.prisma.room.update({
+      where: {
+        id: roomId,
+      },
+      data: {
+        actualTurnStartedAt: new Date(),
+        turnNumber: room.turnNumber + 1,
+        turn: Turn.NIGHT,
+        startedAt: new Date(),
+      },
+    });
+  }
+
+  if (room.turn === Turn.NIGHT) {
+    await fastify.prisma.room.update({
+      where: {
+        id: roomId,
+      },
+      data: {
+        actualTurnStartedAt: new Date(),
+        turnNumber: room.turnNumber + 1,
+        turn: Turn.DAY,
+      },
+    });
+  }
+
+  if (room.turn === Turn.DAY) {
+    await fastify.prisma.room.update({
+      where: {
+        id: roomId,
+      },
+      data: {
+        actualTurnStartedAt: new Date(),
+        turnNumber: room.turnNumber + 1,
+        turn: Turn.VOTE,
+      },
+    });
+  }
+
+  if (room.turn === Turn.VOTE) {
+    await fastify.prisma.room.update({
+      where: {
+        id: roomId,
+      },
+      data: {
+        actualTurnStartedAt: new Date(),
+        turnNumber: room.turnNumber + 1,
+        turn: Turn.NIGHT,
+      },
+    });
+  }
+
+  const updatedRoom = await fastify.prisma.room.findUnique({
+    where: {
+      id: roomId,
+    },
+    include: {
+      players: {
+        include: {
+          role: true,
+        },
+      },
+    },
+  });
+
+  if (!updatedRoom) {
+    return;
+  }
+
+  return updatedRoom;
+}
 
 export default function (fastify: FastifyInstance, opts: any, done: any) {
   fastify.ready((err) => {
     if (err) throw err;
 
     fastify.io.on(SocketOnEvents.CONNECTION, async (Socket: Socket) => {
-      if (!Socket.handshake.query || !Socket.handshake.query.token) {
+      if (!Socket.handshake.auth || !Socket.handshake.auth.token) {
         Socket.disconnect();
         return;
       }
       const decoded = (await jwt.verify(
-        Socket.handshake.query.token as string,
+        Socket.handshake.auth.token as string,
         process.env.JWT_SECRET!
       )) as {
         id: string;
@@ -175,26 +339,30 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
       });
 
       let room;
+      let player;
 
       const playerRoom = await findPlayerRoom(fastify, profile!.id);
+
+      console.log(1111111, playerRoom);
 
       if (playerRoom) {
         room = playerRoom;
       } else {
         room = await getARoom(fastify);
+        player = await createNewPlayer(fastify, room.id, profile!.id);
       }
-
-      const player = await createNewPlayer(fastify, room.id, profile!.id);
 
       Socket.join(room.id);
       Socket.emit(SocketEmitEvents.ROOM, room.id);
 
       const players = await getRoomPlayers(fastify, room.id);
 
-      Socket.emit(SocketEmitEvents.PLAYERS, players);
+      fastify.io.to(room.id).emit(SocketEmitEvents.PLAYERS, players);
 
       if (players.length === PLAYERS_TO_START_GAME) {
-        await startGame(fastify, Socket, room);
+        const roomUpdated = await startGame(fastify, Socket, room, players);
+        fastify.io.to(room.id).emit(SocketEmitEvents.ROOM, roomUpdated);
+        fastify.io.to(room.id).emit(SocketEmitEvents.PLAYERS, players);
       }
 
       Socket.on(SocketOnEvents.HANDLE_SKILL, (data: { target: string }) => {});

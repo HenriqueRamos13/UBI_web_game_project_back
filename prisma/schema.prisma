@@ -62,15 +62,16 @@ enum Team {
 }
 
 model Room {
-  id         String    @id @default(uuid())
-  turn       Turn      @default(LOBBY) //dia discussao votacao ou noite
-  turnNumber Int       @default(0) //numero do turno
-  startedAt  DateTime?
-  hasVote    Boolean //se tem votaçao no dia ou nao
-  voteAnon   Boolean //se os votos do dia sao anonimos ou nao
-  finished   Boolean
-  players    Player[]
-  messages   Message[]
+  id                  String    @id @default(uuid())
+  turn                Turn      @default(LOBBY) //dia discussao votacao ou noite
+  turnNumber          Int       @default(0) //numero do turno
+  startedAt           DateTime?
+  hasVote             Boolean //se tem votaçao no dia ou nao
+  voteAnon            Boolean //se os votos do dia sao anonimos ou nao
+  finished            Boolean
+  actualTurnStartedAt DateTime?
+  players             Player[]
+  messages            Message[]
 }
 
 model Message {

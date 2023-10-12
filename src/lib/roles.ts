@@ -9,6 +9,7 @@ const ROLES: Record<string, Partial<Role>> = {
     description:
       "The Combat Medic acquired their knowledge while serving in the government's army for years, until they managed to escape and seek shelter with the rebels. As a Combat Medic, you can choose a player to protect during the night, making that player immune to attacks. However, you cannot protect yourself.",
     canTalkNight: false,
+    image: "https://i.imgur.com/5ZQJ6Xo.png",
   },
 
   cyberBrute: {
