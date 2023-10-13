@@ -23,6 +23,7 @@ model User {
   id        String   @id @default(uuid())
   email     String   @unique
   password  String
+  gender    String
   profile   Profile?
   createdAt DateTime @default(now())
 }
