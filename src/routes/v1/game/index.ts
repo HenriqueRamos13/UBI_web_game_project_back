@@ -11,18 +11,21 @@ import {
   User,
 } from "@prisma/client";
 import * as jwt from "jsonwebtoken";
+import skillController, { PlayerWithRoleAndProfile } from "./skillController";
 
 const PLAYERS_TO_START_GAME = 2;
 
-enum SocketEmitEvents {
+export enum SocketEmitEvents {
   PONG = "pong",
   ROOM = "room",
   PLAYERS = "players",
   player = "player",
   CHAT_ALERT = "chat-alert",
+  CHAT_TO = "chat-to",
+  CHAT = "chat",
 }
 
-enum SocketOnEvents {
+export enum SocketOnEvents {
   CONNECTION = "connection",
   PING = "ping",
   HANDLE_SKILL = "handle-skill",
@@ -417,6 +420,23 @@ async function getRoomBySocketId(fastify: FastifyInstance, socketId: string) {
   return room;
 }
 
+async function getPlayerBySocketId(fastify: FastifyInstance, socketId: string) {
+  return await fastify.prisma.player
+    .findFirst({
+      where: {
+        socketId: socketId,
+      },
+      include: {
+        role: true,
+        profile: true,
+      },
+    })
+    .then((player) => {
+      if (!player) return;
+      return player;
+    });
+}
+
 export default function (fastify: FastifyInstance, opts: any, done: any) {
   fastify.ready((err) => {
     if (err) throw err;
@@ -479,7 +499,30 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
           );
       }
 
-      Socket.on(SocketOnEvents.HANDLE_SKILL, (data: { target: string }) => {});
+      Socket.on(
+        SocketOnEvents.HANDLE_SKILL,
+        async (data: { target: string }) => {
+          const sender = await getPlayerBySocketId(fastify, Socket.id);
+          const target = await getPlayerBySocketId(fastify, data.target);
+
+          if (!sender || !target) {
+            return;
+          }
+
+          const { event, message } = await skillController(
+            fastify,
+            sender as PlayerWithRoleAndProfile,
+            target as PlayerWithRoleAndProfile
+          );
+
+          if (event === SocketEmitEvents.CHAT_TO) {
+            Socket.emit(event, `${message}`);
+          } else if (event === SocketEmitEvents.CHAT) {
+            fastify.io.to(room!.id).emit(event, `${message}`);
+          } else {
+          }
+        }
+      );
 
       Socket.on(SocketOnEvents.VOTE, (data: { target: string }) => {});
 
@@ -499,7 +542,7 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
           });
         }
 
-        fastify.io.to(room!.id).emit(SocketOnEvents.CHAT, {
+        fastify.io.to(room!.id).emit(SocketEmitEvents.CHAT, {
           message: data.message,
           sender: profile!.name,
           sockId: Socket.id,
