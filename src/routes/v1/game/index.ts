@@ -19,6 +19,7 @@ enum SocketEmitEvents {
   ROOM = "room",
   PLAYERS = "players",
   player = "player",
+  CHAT_ALERT = "chat-alert",
 }
 
 enum SocketOnEvents {
@@ -183,15 +184,33 @@ async function startGame(
   for (let i = 0; i < PLAYERS_TO_START_GAME; i++) {
     if (i < 2) {
       const randomSolo = soloRoles[getRandomInt(soloRoles.length)];
+
+      soloRoles.splice(
+        soloRoles.findIndex((role) => role.id === randomSolo.id),
+        1
+      );
+
       selectedSoloRoles.push(randomSolo);
     }
     if (i >= 2) {
       if (selectedGovernmentRoles.length < selectedRebelRoles.length) {
         const randomGovernment =
           governmentRoles[getRandomInt(governmentRoles.length)];
+
+        governmentRoles.splice(
+          governmentRoles.findIndex((role) => role.id === randomGovernment.id),
+          1
+        );
+
         selectedGovernmentRoles.push(randomGovernment);
       } else {
         const randomRebel = rebelRoles[getRandomInt(rebelRoles.length)];
+
+        rebelRoles.splice(
+          rebelRoles.findIndex((role) => role.id === randomRebel.id),
+          1
+        );
+
         selectedRebelRoles.push(randomRebel);
       }
     }
@@ -315,6 +334,31 @@ async function nextTurn(fastify: FastifyInstance, roomId: string) {
   return updatedRoom;
 }
 
+async function verifyTurn(fastify: FastifyInstance, roomId: string) {
+  const room = await fastify.prisma.room.findUnique({
+    where: {
+      id: roomId,
+    },
+  });
+
+  if (!room) {
+    return;
+  }
+
+  if (room.startedAt) {
+    // pegue o tempo atual, se tiver passado 30 segundos desde o startedAt, chame nextTurn
+    const now = new Date();
+    const diff = now.getTime() - room.actualTurnStartedAt!.getTime();
+    const seconds = diff / 1000;
+
+    if (seconds >= 30) {
+      return await nextTurn(fastify, roomId);
+    } else {
+      return room;
+    }
+  }
+}
+
 async function verifySocketId(
   fastify: FastifyInstance,
   socketId: string,
@@ -415,19 +459,44 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
 
       const players = await getRoomPlayers(fastify, room.id);
       fastify.io.to(room.id).emit(SocketEmitEvents.ROOM, room);
-      fastify.io.to(room.id).emit(SocketEmitEvents.PLAYERS, players);
+      if (players.length === 0) {
+        let playersReloaded = await getRoomPlayers(fastify, room.id);
+        fastify.io.to(room!.id).emit(SocketEmitEvents.PLAYERS, playersReloaded);
+      } else {
+        fastify.io.to(room!.id).emit(SocketEmitEvents.PLAYERS, players);
+      }
 
       if (players.length === PLAYERS_TO_START_GAME && !room.startedAt) {
         const roomUpdated = await startGame(fastify, Socket, room, players);
         Socket.emit(SocketEmitEvents.ROOM, roomUpdated);
-        Socket.emit(SocketEmitEvents.PLAYERS, players);
+        fastify.io
+          .to(roomUpdated!.id)
+          .emit(
+            SocketEmitEvents.PLAYERS,
+            await getRoomPlayers(fastify, roomUpdated!.id)
+          );
       }
 
       Socket.on(SocketOnEvents.HANDLE_SKILL, (data: { target: string }) => {});
 
       Socket.on(SocketOnEvents.VOTE, (data: { target: string }) => {});
 
-      Socket.on(SocketOnEvents.CHAT, (data: { message: string }) => {
+      Socket.on(SocketOnEvents.CHAT, async (data: { message: string }) => {
+        const room = await getRoomBySocketId(fastify, Socket.id);
+        if (room?.turn !== Turn.DAY && room?.turn !== Turn.VOTE) {
+          return Socket.emit(SocketEmitEvents.CHAT_ALERT, {
+            message: "You cant talk now!",
+          });
+        }
+        if (
+          room.players.find((player) => player.socketId === Socket.id)
+            ?.canTalk !== true
+        ) {
+          return Socket.emit(SocketEmitEvents.CHAT_ALERT, {
+            message: "You cant talk now!",
+          });
+        }
+
         fastify.io.to(room!.id).emit(SocketOnEvents.CHAT, {
           message: data.message,
           sender: profile!.name,
@@ -435,13 +504,39 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
         });
       });
 
-      Socket.on(SocketOnEvents.CHAT_NIGHT, (data: { message: string }) => {
-        fastify.io.to(room!.id).emit(SocketOnEvents.CHAT, {
-          message: data.message,
-          sender: profile!.name,
-          sockId: Socket.id,
-        });
-      });
+      Socket.on(
+        SocketOnEvents.CHAT_NIGHT,
+        async (data: { message: string }) => {
+          const room = await getRoomBySocketId(fastify, Socket.id);
+          if (room?.turn !== Turn.NIGHT) {
+            return Socket.emit(SocketEmitEvents.CHAT_ALERT, {
+              message: "You cant talk now!",
+            });
+          }
+          if (
+            room.players.find((player) => player.socketId === Socket.id)?.role
+              ?.canTalkNight !== true
+          ) {
+            return Socket.emit(SocketEmitEvents.CHAT_ALERT, {
+              message: "You cant talk now!",
+            });
+          }
+          if (
+            room.players.find((player) => player.socketId === Socket.id)
+              ?.canTalk !== true
+          ) {
+            return Socket.emit(SocketEmitEvents.CHAT_ALERT, {
+              message: "You cant talk now!",
+            });
+          }
+
+          fastify.io.to(room!.id).emit(SocketOnEvents.CHAT, {
+            message: data.message,
+            sender: profile!.name,
+            sockId: Socket.id,
+          });
+        }
+      );
 
       Socket.on(
         SocketOnEvents.CHAT_TO,
@@ -456,6 +551,7 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
 
       Socket.on(SocketOnEvents.PING, async () => {
         Socket.emit(SocketEmitEvents.PONG);
+        Socket.emit(SocketEmitEvents.ROOM, await verifyTurn(fastify, room!.id));
       });
 
       Socket.on(SocketOnEvents.DISCONNECT, (data: any) => {

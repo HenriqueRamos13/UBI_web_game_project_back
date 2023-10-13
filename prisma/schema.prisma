@@ -102,12 +102,13 @@ enum PotionType {
 
 model Player {
   id                              String         @id @default(uuid())
-  room                            Room           @relation(fields: [roomId], references: [id])
+  room                            Room           @relation(fields: [roomId], references: [id], onDelete: Cascade)
   roomId                          String
   profile                         Profile        @relation(fields: [profileId], references: [id])
   profileId                       String
   socketId                        String?
   messages                        Message[]
+  canTalk                         Boolean        @default(true)
   index                           Int
   life                            Int            @default(1)
   shield                          Int            @default(0)
