@@ -52,7 +52,7 @@ async function createNewPlayer(
         index: playersInRoom + 1,
       },
     })
-    .then((player) => {
+    .then((player: Player) => {
       return player;
     });
 }
@@ -97,7 +97,7 @@ async function getARoom(fastify: FastifyInstance) {
               },
             },
           })
-          .then((room) => {
+          .then((room: Room) => {
             return room;
           });
       } else {
@@ -141,7 +141,7 @@ async function getRoomPlayers(fastify: FastifyInstance, roomId: string) {
         profile: true,
       },
     })
-    .then((players) => {
+    .then((players: Player[]) => {
       return players;
     });
 }
@@ -186,7 +186,7 @@ async function startGame(
       const randomSolo = soloRoles[getRandomInt(soloRoles.length)];
 
       soloRoles.splice(
-        soloRoles.findIndex((role) => role.id === randomSolo.id),
+        soloRoles.findIndex((role: Role) => role.id === randomSolo.id),
         1
       );
 
@@ -198,7 +198,9 @@ async function startGame(
           governmentRoles[getRandomInt(governmentRoles.length)];
 
         governmentRoles.splice(
-          governmentRoles.findIndex((role) => role.id === randomGovernment.id),
+          governmentRoles.findIndex(
+            (role: Role) => role.id === randomGovernment.id
+          ),
           1
         );
 
@@ -207,7 +209,7 @@ async function startGame(
         const randomRebel = rebelRoles[getRandomInt(rebelRoles.length)];
 
         rebelRoles.splice(
-          rebelRoles.findIndex((role) => role.id === randomRebel.id),
+          rebelRoles.findIndex((role: Role) => role.id === randomRebel.id),
           1
         );
 
@@ -489,7 +491,7 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
           });
         }
         if (
-          room.players.find((player) => player.socketId === Socket.id)
+          room.players.find((player: Player) => player.socketId === Socket.id)
             ?.canTalk !== true
         ) {
           return Socket.emit(SocketEmitEvents.CHAT_ALERT, {
@@ -514,15 +516,15 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
             });
           }
           if (
-            room.players.find((player) => player.socketId === Socket.id)?.role
-              ?.canTalkNight !== true
+            room.players.find((player: Player) => player.socketId === Socket.id)
+              ?.role?.canTalkNight !== true
           ) {
             return Socket.emit(SocketEmitEvents.CHAT_ALERT, {
               message: "You cant talk now!",
             });
           }
           if (
-            room.players.find((player) => player.socketId === Socket.id)
+            room.players.find((player: Player) => player.socketId === Socket.id)
               ?.canTalk !== true
           ) {
             return Socket.emit(SocketEmitEvents.CHAT_ALERT, {
