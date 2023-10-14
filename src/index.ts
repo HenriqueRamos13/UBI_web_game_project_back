@@ -153,11 +153,9 @@ server.listen({ port: 3001 }, (err, address) => {
 
 declare module "fastify" {
   interface FastifyInstance {
-    // redis: FastifyRedis;
     io: Server;
   }
   interface FastifyRequest {
-    // you must reference the interface and not the type
     someProp: string;
   }
 }

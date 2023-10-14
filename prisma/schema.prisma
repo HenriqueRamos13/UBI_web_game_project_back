@@ -110,6 +110,7 @@ model Player {
   messages                        Message[]
   canTalk                         Boolean        @default(true)
   index                           Int
+  voteIn                          Int?
   life                            Int            @default(1)
   shield                          Int            @default(0)
   alive                           Boolean        @default(true)

@@ -9,6 +9,7 @@ import {
   Room,
   Turn,
   User,
+  EliminatedBy,
 } from "@prisma/client";
 import * as jwt from "jsonwebtoken";
 import skillController, { PlayerWithRoleAndProfile } from "./skillController";
@@ -253,11 +254,6 @@ async function startGame(
 }
 
 async function nextTurn(fastify: FastifyInstance, roomId: string) {
-  // verify the acctual turn then increment it
-  // if is LOBBY go to NIGHT and set startedAt to now
-  // if is NIGHT go to DAY
-  // if is DAY go to VOTE
-
   const room = await fastify.prisma.room.findUnique({
     where: {
       id: roomId,
@@ -283,6 +279,44 @@ async function nextTurn(fastify: FastifyInstance, roomId: string) {
   }
 
   if (room.turn === Turn.NIGHT) {
+    const players = await fastify.prisma.player.findMany({
+      where: {
+        roomId: roomId,
+      },
+      select: {
+        voteIn: true,
+      },
+    });
+
+    const obj: any = {};
+
+    players.forEach((player) => {
+      if (player.voteIn) {
+        if (obj[player.voteIn]) {
+          obj[player.voteIn] += 1;
+        } else {
+          obj[player.voteIn] = 1;
+        }
+      }
+    });
+
+    if (Object.keys(obj).length !== 0) {
+      const mostVoted = Object.keys(obj).reduce((a, b) =>
+        obj[a] > obj[b] ? a : b
+      );
+
+      const playerMostVoted = await fastify.prisma.player.findFirst({
+        where: {
+          index: Number(mostVoted),
+          roomId: roomId,
+        },
+      });
+
+      await eliminatePlayer(fastify, playerMostVoted!.id, {
+        voted: true,
+      });
+    }
+
     await fastify.prisma.room.update({
       where: {
         id: roomId,
@@ -309,7 +343,45 @@ async function nextTurn(fastify: FastifyInstance, roomId: string) {
   }
 
   if (room.turn === Turn.VOTE) {
-    await fastify.prisma.room.update({
+    const players = await fastify.prisma.player.findMany({
+      where: {
+        roomId: roomId,
+      },
+      select: {
+        voteIn: true,
+      },
+    });
+
+    const obj: any = {};
+
+    players.forEach((player) => {
+      if (player.voteIn) {
+        if (obj[player.voteIn]) {
+          obj[player.voteIn] += 1;
+        } else {
+          obj[player.voteIn] = 1;
+        }
+      }
+    });
+
+    if (Object.keys(obj).length !== 0) {
+      const mostVoted = Object.keys(obj).reduce((a, b) =>
+        obj[a] > obj[b] ? a : b
+      );
+
+      const playerMostVoted = await fastify.prisma.player.findFirst({
+        where: {
+          index: Number(mostVoted),
+          roomId: roomId,
+        },
+      });
+
+      await eliminatePlayer(fastify, playerMostVoted!.id, {
+        voted: true,
+      });
+    }
+
+    await await fastify.prisma.room.update({
       where: {
         id: roomId,
       },
@@ -341,7 +413,50 @@ async function nextTurn(fastify: FastifyInstance, roomId: string) {
   return updatedRoom;
 }
 
-async function verifyTurn(fastify: FastifyInstance, roomId: string) {
+async function eliminatePlayer(
+  fastify: FastifyInstance,
+  playerId: string,
+  data: { voted?: boolean; killed?: number }
+) {
+  const player = await fastify.prisma.player.findUnique({
+    where: {
+      id: playerId,
+    },
+  });
+
+  if (player?.voteProtection && data.voted) {
+    await fastify.prisma.player.update({
+      where: {
+        id: playerId,
+      },
+      data: {
+        voteProtection: false,
+      },
+    });
+    return;
+  }
+
+  await fastify.prisma.player.update({
+    where: {
+      id: playerId,
+    },
+    data: {
+      alive: false,
+      ...(data.killed
+        ? {
+            attackedBy: data.killed,
+          }
+        : {}),
+      elimination: data.voted ? EliminatedBy.VOTE : EliminatedBy.ATTACK,
+    },
+  });
+}
+
+async function verifyTurn(
+  fastify: FastifyInstance,
+  roomId: string,
+  Socket: Socket
+) {
   const room = await fastify.prisma.room.findUnique({
     where: {
       id: roomId,
@@ -353,13 +468,17 @@ async function verifyTurn(fastify: FastifyInstance, roomId: string) {
   }
 
   if (room.startedAt) {
-    // pegue o tempo atual, se tiver passado 30 segundos desde o startedAt, chame nextTurn
     const now = new Date();
     const diff = now.getTime() - room.actualTurnStartedAt!.getTime();
     const seconds = diff / 1000;
 
     if (seconds >= 30) {
-      return await nextTurn(fastify, roomId);
+      await nextTurn(fastify, roomId);
+
+      const newPlayers = await getRoomPlayers(fastify, room.id);
+
+      Socket.to(room.id).emit(SocketEmitEvents.PLAYERS, newPlayers);
+      return;
     } else {
       return room;
     }
@@ -533,7 +652,28 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
         }
       );
 
-      Socket.on(SocketOnEvents.VOTE, (data: { target: string }) => {});
+      Socket.on(SocketOnEvents.VOTE, async (data: { target: string }) => {
+        const room = await getRoomBySocketId(fastify, Socket.id);
+
+        if (room?.turn === Turn.DAY) return;
+
+        const sender = await getPlayerBySocketId(fastify, Socket.id);
+
+        if (room?.turn === Turn.NIGHT) {
+          if (sender?.role?.aura !== Aura.EVIL) return;
+        }
+
+        const target = await getPlayerBySocketId(fastify, data.target);
+
+        await fastify.prisma.player.update({
+          where: {
+            id: sender!.id,
+          },
+          data: {
+            voteIn: target!.index,
+          },
+        });
+      });
 
       Socket.on(SocketOnEvents.CHAT, async (data: { message: string }) => {
         const room = await getRoomBySocketId(fastify, Socket.id);
@@ -605,7 +745,10 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
 
       Socket.on(SocketOnEvents.PING, async () => {
         Socket.emit(SocketEmitEvents.PONG);
-        Socket.emit(SocketEmitEvents.ROOM, await verifyTurn(fastify, room!.id));
+        Socket.emit(
+          SocketEmitEvents.ROOM,
+          await verifyTurn(fastify, room!.id, Socket)
+        );
       });
 
       Socket.on(SocketOnEvents.DISCONNECT, (data: any) => {
