@@ -39,7 +39,8 @@ export enum SocketOnEvents {
 async function createNewPlayer(
   fastify: FastifyInstance,
   roomId: string,
-  profileId: string
+  profileId: string,
+  socketId: string
 ) {
   const playersInRoom = await fastify.prisma.player.count({
     where: {
@@ -53,6 +54,7 @@ async function createNewPlayer(
         roomId: roomId,
         profileId: profileId,
         index: playersInRoom + 1,
+        socketId: socketId,
       },
     })
     .then((player: Player) => {
@@ -474,7 +476,12 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
         await verifySocketId(fastify, Socket.id, profile!.id);
       } else {
         room = await getARoom(fastify);
-        player = await createNewPlayer(fastify, room.id, profile!.id);
+        player = await createNewPlayer(
+          fastify,
+          room.id,
+          profile!.id,
+          Socket.id
+        );
       }
 
       Socket.join(room.id);
@@ -504,15 +511,17 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
         async (data: { target: string }) => {
           const sender = await getPlayerBySocketId(fastify, Socket.id);
           const target = await getPlayerBySocketId(fastify, data.target);
+          const room = await getRoomBySocketId(fastify, Socket.id);
 
-          if (!sender || !target) {
+          if (!sender || !target || !room) {
             return;
           }
 
           const { event, message } = await skillController(
             fastify,
             sender as PlayerWithRoleAndProfile,
-            target as PlayerWithRoleAndProfile
+            target as PlayerWithRoleAndProfile,
+            room as Room
           );
 
           if (event === SocketEmitEvents.CHAT_TO) {
