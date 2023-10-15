@@ -223,16 +223,6 @@ const ROLES: Record<string, Partial<Role>> = {
     image: "https://i.imgur.com/DHwCiuP.png",
   },
 
-  corruptor: {
-    name: "Corruptor",
-    aura: Aura.UNKNOWN,
-    team: Team.GOVERNMENT,
-    description:
-      "This government agent specializes in causing havoc by corrupting one player from opposing teams each night. Each night they can select a player to corrupt, causing their systems to glitch and preventing them from talking and voting the next day. The glitched player will die at the end of the day.",
-    canTalkNight: true,
-    image: "https://i.imgur.com/isSBwWF.png",
-  },
-
   disruptor: {
     name: "Disruptor",
     aura: Aura.EVIL,
@@ -273,6 +263,16 @@ const ROLES: Record<string, Partial<Role>> = {
       "The Serial Killer is a disturbed and psychotic figure infiltrated into the group with the goal of eliminating all players. Every night, they can choose a player to stab.",
     canTalkNight: false,
     image: "https://i.imgur.com/QwE0MKU.png",
+  },
+
+  corruptor: {
+    name: "Corruptor",
+    aura: Aura.UNKNOWN,
+    team: Team.GOVERNMENT,
+    description:
+      "This infiltrated individual causes havoc by corrupting players. Each night they can select a player to corrupt, causing their systems to glitch and preventing them from talking and voting the next day. The glitched player will die at the end of the day.",
+    canTalkNight: true,
+    image: "https://i.imgur.com/isSBwWF.png",
   },
 };
 
