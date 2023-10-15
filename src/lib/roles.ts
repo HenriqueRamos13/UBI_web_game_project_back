@@ -268,7 +268,7 @@ const ROLES: Record<string, Partial<Role>> = {
   corruptor: {
     name: "Corruptor",
     aura: Aura.UNKNOWN,
-    team: Team.GOVERNMENT,
+    team: Team.SOLO,
     description:
       "This infiltrated individual causes havoc by corrupting players. Each night they can select a player to corrupt, causing their systems to glitch and preventing them from talking and voting the next day. The glitched player will die at the end of the day.",
     canTalkNight: true,
