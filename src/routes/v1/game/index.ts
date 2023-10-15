@@ -180,9 +180,6 @@ async function startGame(
     },
   });
 
-  // sempre vai ter 2 solos
-  // sempre vai ter um governo a mais do que rebeldes
-
   const selectedSoloRoles: Role[] = [];
   const selectedGovernmentRoles: Role[] = [];
   const selectedRebelRoles: Role[] = [];
