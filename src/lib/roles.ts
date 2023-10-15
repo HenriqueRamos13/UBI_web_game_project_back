@@ -92,16 +92,6 @@ const ROLES: Record<string, Partial<Role>> = {
     image: "https://i.imgur.com/Z6QBr4K.png",
   },
 
-  streetThief: {
-    name: "Street Thief",
-    aura: Aura.GOOD,
-    team: Team.REBEL,
-    description:
-      "The Street Thief used to roam the streets of Neonova, pickpocketing wallets to survive. One day, she pilfered from a rebel agent who was impressed by her skills and recruited her into the rebellion. The Street Thief has the ability to select a deceased player and assume their identity. However, if she steals the identity of a player from an opposing team, she loses this ability.",
-    canTalkNight: false,
-    image: "https://i.imgur.com/2iRm1Hi.png",
-  },
-
   drugDealer: {
     name: "Drug Dealer",
     aura: Aura.GOOD,

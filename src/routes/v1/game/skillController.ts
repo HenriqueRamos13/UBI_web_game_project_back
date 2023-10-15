@@ -85,27 +85,12 @@ const ROLES_SKILLS = {
   //   target: PlayerWithRoleAndProfile,
   //   room: Room
   // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
-  // "Street Thief": async (
-  //   fastify: FastifyInstance,
-  //   target: PlayerWithRoleAndProfile,
-  //   room: Room
-  // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
   // "Drug Dealer": async (
   //   fastify: FastifyInstance,
   //   target: PlayerWithRoleAndProfile,
   //   room: Room
   // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
-  // Neurohacker: async (
-  //   fastify: FastifyInstance,
-  //   target: PlayerWithRoleAndProfile,
-  //   room: Room
-  // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
   // "Vigilante Robot": async (
-  //   fastify: FastifyInstance,
-  //   target: PlayerWithRoleAndProfile,
-  //   room: Room
-  // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
-  // "Data Smuggler": async (
   //   fastify: FastifyInstance,
   //   target: PlayerWithRoleAndProfile,
   //   room: Room
@@ -116,11 +101,6 @@ const ROLES_SKILLS = {
   //   room: Room
   // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
   // "Ethical Hacker": async (
-  //   fastify: FastifyInstance,
-  //   target: PlayerWithRoleAndProfile,
-  //   room: Room
-  // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
-  // "Drone Operator": async (
   //   fastify: FastifyInstance,
   //   target: PlayerWithRoleAndProfile,
   //   room: Room
@@ -145,21 +125,6 @@ const ROLES_SKILLS = {
   //   target: PlayerWithRoleAndProfile,
   //   room: Room
   // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
-  // "Disguise Specialist": async (
-  //   fastify: FastifyInstance,
-  //   target: PlayerWithRoleAndProfile,
-  //   room: Room
-  // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
-  // Recruiter: async (
-  //   fastify: FastifyInstance,
-  //   target: PlayerWithRoleAndProfile,
-  //   room: Room
-  // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
-  // "Government Fan": async (
-  //   fastify: FastifyInstance,
-  //   target: PlayerWithRoleAndProfile,
-  //   room: Room
-  // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
   // "Government Agent": async (
   //   fastify: FastifyInstance,
   //   target: PlayerWithRoleAndProfile,
@@ -176,16 +141,6 @@ const ROLES_SKILLS = {
   //   room: Room
   // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
   // "Blackhat Hacker": async (
-  //   fastify: FastifyInstance,
-  //   target: PlayerWithRoleAndProfile,
-  //   room: Room
-  // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
-  // "Data Manipulator": async (
-  //   fastify: FastifyInstance,
-  //   target: PlayerWithRoleAndProfile,
-  //   room: Room
-  // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
-  // Corruptor: async (
   //   fastify: FastifyInstance,
   //   target: PlayerWithRoleAndProfile,
   //   room: Room
@@ -210,27 +165,7 @@ const ROLES_SKILLS = {
   //   target: PlayerWithRoleAndProfile,
   //   room: Room
   // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
-  // "Illegal Trader": async (
-  //   fastify: FastifyInstance,
-  //   target: PlayerWithRoleAndProfile,
-  //   room: Room
-  // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
-  // "Lonely Hacker": async (
-  //   fastify: FastifyInstance,
-  //   target: PlayerWithRoleAndProfile,
-  //   room: Room
-  // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
-  // Accomplice: async (
-  //   fastify: FastifyInstance,
-  //   target: PlayerWithRoleAndProfile,
-  //   room: Room
-  // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
-  // Biohacker: async (
-  //   fastify: FastifyInstance,
-  //   target: PlayerWithRoleAndProfile,
-  //   room: Room
-  // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
-  // Biomodified: async (
+  // Corruptor: async (
   //   fastify: FastifyInstance,
   //   target: PlayerWithRoleAndProfile,
   //   room: Room
