@@ -69,6 +69,8 @@ model Room {
   hasVote             Boolean //se tem votaçao no dia ou nao
   voteAnon            Boolean //se os votos do dia sao anonimos ou nao
   finished            Boolean
+  winner              Team?
+  soloWinner          String?
   actualTurnStartedAt DateTime?
   players             Player[]
   messages            Message[]

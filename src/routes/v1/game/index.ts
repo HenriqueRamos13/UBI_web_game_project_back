@@ -253,6 +253,90 @@ async function startGame(
   return await nextTurn(fastify, room.id);
 }
 
+async function verifyIfGameEnded(fastify: FastifyInstance, roomId: string) {
+  const room = await fastify.prisma.room.findUnique({
+    where: {
+      id: roomId,
+    },
+    include: {
+      players: {
+        include: {
+          role: true,
+        },
+      },
+    },
+  });
+
+  if (!room) {
+    return;
+  }
+
+  const alivePlayers = room.players.filter((player) => player.alive === true);
+
+  const rebelTeam = alivePlayers.filter(
+    (player) => player.role?.team === Team.REBEL
+  );
+
+  const governmentTeam = alivePlayers.filter(
+    (player) => player.role?.team === Team.GOVERNMENT
+  );
+
+  const soloTeam = alivePlayers.filter(
+    (player) => player.role?.team === Team.SOLO
+  );
+
+  let winner: {
+    finished: boolean;
+    winner?: Team;
+    soloWinner?: string;
+  } | null = null;
+
+  if (rebelTeam.length === 0 && governmentTeam.length >= 1) {
+    winner = {
+      finished: true,
+      winner: Team.GOVERNMENT,
+    };
+  } else if (governmentTeam.length === 0 && rebelTeam.length >= 1) {
+    winner = {
+      finished: true,
+      winner: Team.REBEL,
+    };
+  } else if (
+    alivePlayers.length === 1 &&
+    alivePlayers[0].role?.team === Team.SOLO
+  ) {
+    winner = {
+      finished: true,
+      winner: Team.SOLO,
+      soloWinner: alivePlayers[0].role?.name,
+    };
+  }
+
+  if (!winner) return;
+
+  const roomUpdated = await fastify.prisma.room.update({
+    where: {
+      id: roomId,
+    },
+    data: {
+      finished: true,
+      winner: winner.winner,
+      soloWinner: winner.soloWinner,
+    },
+    include: {
+      players: {
+        include: {
+          role: true,
+        },
+      },
+    },
+  });
+
+  fastify.io
+    .to(roomUpdated.id || roomId)
+    .emit(SocketEmitEvents.ROOM, roomUpdated);
+}
+
 async function nextTurn(fastify: FastifyInstance, roomId: string) {
   const room = await fastify.prisma.room.findUnique({
     where: {
@@ -315,6 +399,8 @@ async function nextTurn(fastify: FastifyInstance, roomId: string) {
       await eliminatePlayer(fastify, playerMostVoted!.id, {
         voted: true,
       });
+
+      await verifyIfGameEnded(fastify, roomId);
     }
 
     await fastify.prisma.room.update({
@@ -379,6 +465,8 @@ async function nextTurn(fastify: FastifyInstance, roomId: string) {
       await eliminatePlayer(fastify, playerMostVoted!.id, {
         voted: true,
       });
+
+      await verifyIfGameEnded(fastify, roomId);
     }
 
     await await fastify.prisma.room.update({
