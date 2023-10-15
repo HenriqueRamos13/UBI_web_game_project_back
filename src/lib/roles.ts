@@ -112,16 +112,6 @@ const ROLES: Record<string, Partial<Role>> = {
     image: "https://i.imgur.com/D2cr8nx.png",
   },
 
-  neurohacker: {
-    name: "Neurohacker",
-    aura: Aura.UNKNOWN,
-    team: Team.REBEL,
-    description:
-      "The Neurohacker is a skilled individual who can manipulate neural and cybernetic systems. They possess two neural injections, each usable only once during the night. One injection destabilizes a player's cybernetic system, leading to their demise, while the other reinforces a player's neural defenses, protecting them from attacks. The protective injection is only consumed if the player becomes a target of an attack.",
-    canTalkNight: false,
-    image: "https://i.imgur.com/bXnli6k.png",
-  },
-
   vigilanteRobot: {
     name: "Vigilante Robot",
     aura: Aura.UNKNOWN,
@@ -130,16 +120,6 @@ const ROLES: Record<string, Partial<Role>> = {
       "The AI-controlled Vigilante Robot was created by the rebel agents to protect the rebellion. The robot is equipped with tools that can erase a player's digital presence, leading to their demise. It can also reveal a player's role to all other players. Each of these abilities can only be used once, during different days.",
     canTalkNight: false,
     image: "https://i.imgur.com/mTXOe3X.png",
-  },
-
-  dataSmuggler: {
-    name: "Data Smuggler",
-    aura: Aura.GOOD,
-    team: Team.REBEL,
-    description:
-      "The Data Smuggler is a rebel agent who has infiltrated the government and gained access to confidential government data. Starting from the second night, they possess two data cards that can be secretly distributed to other players during the night. These data cards allow the recipients to voluntarily reveal their roles. If the recipients do not reveal their roles after a certain amount of time, the Data Smuggler has the option to reveal them.",
-    canTalkNight: false,
-    image: "https://i.imgur.com/7ePSdkK.png",
   },
 
   hardwareSpecialist: {
@@ -162,16 +142,6 @@ const ROLES: Record<string, Partial<Role>> = {
     image: "https://i.imgur.com/S38pLne.png",
   },
 
-  droneOperator: {
-    name: "Drone Operator",
-    aura: Aura.GOOD,
-    team: Team.REBEL,
-    description:
-      "The Drone Operator is an expert in drone technology, commanding a drone equipped with two lethal projectiles. Each night, the operator can select a target. The following day, they have the option to launch one of the projectiles to eliminate the chosen target or switch targets. However, this lethal technology is not without risks. If the operator attempts to eliminate a player belonging to the rebel team, the projectile's direction is reversed, resulting in the operator's own demise.",
-    canTalkNight: false,
-    image: "https://i.imgur.com/6nQV5N6.png",
-  },
-
   //government roles
   nanotechEngineer: {
     name: "Nanotech Engineer",
@@ -188,7 +158,7 @@ const ROLES: Record<string, Partial<Role>> = {
     aura: Aura.EVIL,
     team: Team.GOVERNMENT,
     description:
-      "The Chief of Intelligence is the leader of the infiltrated government agents. Due to their knowledge and experience in the field of technology, they can infiltrate a player's cyber systems, revealing the player's role to their fellow government agents during the night. If they become the last surviving government agent, they resign their position and adopt the role of a regular government agent, without any special abilities.",
+      "The Chief of Intelligence is the leader of the infiltrated government agents. Due to their knowledge and experience in the field of technology, they can infiltrate a player's cyber systems, revealing the player's role to their fellow government agents during the night.",
     canTalkNight: true,
     image: "https://i.imgur.com/CULkB31.png",
   },
@@ -212,36 +182,6 @@ const ROLES: Record<string, Partial<Role>> = {
     canTalkNight: true,
     image: "https://i.imgur.com/H9i06RW.png",
   },
-
-  disguiseSpecialist: {
-    name: "Disguise Specialist",
-    aura: Aura.EVIL,
-    team: Team.GOVERNMENT,
-    description:
-      "The Disguise Specialist has the ability to disguise another player during the day. This disguise will make the selected player appear as if they belong to the government team when their role is checked by any investigative role.",
-    canTalkNight: true,
-    image: "https://i.imgur.com/kqsCZo3.png",
-  },
-
-  /*roles de converter outro jogador, confirmar se vai ter no jogo ou n depois
-  recruiter: {
-    name: "Recruiter",
-    aura: Aura.EVIL,
-    team: Team.GOVERNMENT,
-    description: "The Recruiter is a government agent who has the ability to convert a rebel agent to their side. When the Recruiter dies, on the following night, the player who is voted by the government agents is converted into a 'Government Agent' role without any special abilities.",
-    canTalkNight: true,
-    image: "https://i.imgur.com/6cysJ9o.png",
-  },
-
-  governmentFan: {
-    name: "Government Fan",
-    aura: Aura.GOOD,
-    team: Team.GOVERNMENT,
-    description: "The Government Fan is a mysterious figure among government agents. They are initially considered part of the government team and do not contribute to the team's victory condition until they are targeted for elimination. When targeted, they become a regular government agent with no special abilities. Once during the game, they can choose to reveal their role to another player.",
-    canTalkNight: false,
-    image: "https://i.imgur.com/Eu8xVHQ.png",
- }
-*/
 
   governmentAgent: {
     name: "Government Agent",
@@ -281,16 +221,6 @@ const ROLES: Record<string, Partial<Role>> = {
       "A morally ambiguous hacker. Once per game, during the voting phase, the hacker can hack into the voting system and prevent a player from being eliminated by the other players.",
     canTalkNight: true,
     image: "https://i.imgur.com/DHwCiuP.png",
-  },
-
-  dataManipulator: {
-    name: "Data Manipulator",
-    aura: Aura.UNKNOWN,
-    team: Team.GOVERNMENT,
-    description:
-      "This agent is a specialist altering and manipulating data. Twice per game, they can activate their ability during the day, making the roles of all players who die on the following night visible only to the government agents' team. For the other players, the roles remain hidden.",
-    canTalkNight: true,
-    image: "https://i.imgur.com/0YqIkuO.png",
   },
 
   corruptor: {
@@ -344,54 +274,6 @@ const ROLES: Record<string, Partial<Role>> = {
     canTalkNight: false,
     image: "https://i.imgur.com/QwE0MKU.png",
   },
-
-  illegalTrader: {
-    name: "Illegal Trader",
-    aura: Aura.UNKNOWN,
-    team: Team.SOLO,
-    description:
-      "The Illegal Trader is a specialist in illicit chemicals and poisons. They possess two dangerous mixtures, one red and one black, and every night they can give one of each to two players. Both players are warned that they may die at the end of the day, but only the player who received the black substance will die. The red substance becomes fatal on the second consumption. Players do not know which substance they received. The game ends if the Illegal Trader is the last player alive.",
-    canTalkNight: false,
-    image: "https://i.imgur.com/dOAtQlM.png",
-  },
-
-  /*solo kill roles de converter, confirmar se vai ter no jogo ou n depois
-  lonelyHacker: {
-    name: "Lonely Hacker",
-    aura: Aura.UNKNOWN,
-    team: Team.SOLO,
-    description: "In the dystopian and totalitarian universe of Neonova, where solitude is your only ally, the Lone Hacker sets out on a new adventure to form an alliance with the rebels and seize control of the rebellion. While without an accomplice, the hacker can attempt to convert someone during the night. If the target is a government agent, they die. If it's a player from the rebel team, they are converted. Once converted, the two players can vote at night to eliminate anyone they choose. The Lone Hacker wins if they are the last survivor, if their accomplice is the last survivor, or if both are alive. If the accomplice dies, they can select another player to convert.",
-    canTalkNight: false,
-    image: "https://i.imgur.com/T9gVBSf.png",
-  },
-
-  accomplice: {
-    name: "Accomplice",
-    aura: Aura.UNKNOWN,
-    team: Team.SOLO,
-    description: "Rebel Agent converted by the Lone Hacker. Their goal is to eliminate all players and seize control of the rebellion with their ally.",
-    canTalkNight: false,
-    image: "https://i.imgur.com/92IFlpK.png",
-  },
-
-  biohacker: {
-    name: "Biohacker",
-    aura: Aura.UNKNOWN,
-    team: Team.SOLO,
-    description: "The Biohacker is an individual with the goal of biologically modifying as many people as possible and becoming their leader. Every night, they can select a player to biologically modify, that player will be converted on the following night. Each converted player can, in turn, select another player for conversion. The biohacker cannot convert government agents or solo voters. They win if all living players are converted.",
-    canTalkNight: false,
-    image: "https://i.imgur.com/MbvKeC3.png",
-  },
-
-  biomodified: {
-    name: "Biomodified",
-    aura: Aura.UNKNOWN,
-    team: Team.SOLO,
-    description: "Biomodified players were converted by the Biohacker. Now, they are loyal to the Biohacker and determined to eliminate all other players to seize control of the game.",
-    canTalkNight: false,
-  }
-
-*/
 };
 
 export default ROLES;
