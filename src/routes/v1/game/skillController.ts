@@ -303,9 +303,35 @@ const ROLES_SKILLS = {
    fastify: FastifyInstance,
      target: PlayerWithRoleAndProfile,
      room: Room
-   ): Promise<{ event: SocketEmitEvents; message: string }> => {
+   ): Promise<{ event: SocketEmitEvents; message: String; isEvil?: boolean }> => {
     if(target.role.name !== "Hardware Specialist" && room.turn === "NIGHT"){
+      await fastify.prisma.player.findFirst({
+        where: {
+          id: target.id,
+        },
+        include: {
+          role: true,
+        }
+      })
       
+      if(target.role.team === "GOVERNMENT"){
+        return {
+          event: SocketEmitEvents.CHAT_TO,
+          message: "You checked an evil player.",
+          isEvil: true,
+        }
+      } else {
+        return {
+          event: SocketEmitEvents.CHAT_TO,
+          message: "You checked a good player.",
+          isEvil: false,
+        }
+      }
+    } else {
+      return {
+        event: SocketEmitEvents.CHAT_TO,
+        message: "You can't do that.",
+      }
     }
    },
 
