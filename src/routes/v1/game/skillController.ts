@@ -14,65 +14,76 @@ const ROLES_SKILLS = {
     target: PlayerWithRoleAndProfile,
     room: Room,
     sender: PlayerWithRoleAndProfile
-  ): Promise<{ event: SocketEmitEvents; message: string }> => {
-    if (target.role.name !== "Combat Medic" && room.turn == "NIGHT") {
+  ): Promise<{ event?: SocketEmitEvents; message?: string }> => {
+    if (
+      target.role.name !== "Combat Medic" && 
+      room.turn == "NIGHT"
+      ) {
       await fastify.prisma.player.update({
         data: {
-          shield: target.shield + 1,
+          isProtected: true,
         },
         where: {
           id: target.id,
         },
       });
-
-      return {
-        event: SocketEmitEvents.CHAT_TO,
-        message:
-          "You protected " + target.index + " " + target.profile.name + ".",
+      
+      if(target.attacked === true) {
+        return {
+          event: SocketEmitEvents.CHAT_TO,
+          message: "You protected " + target.index + " " + target.profile.name + ".",
       };
+      } else {
+      return {};
+    }
     } else if (target.role.name === "Combat Medic" && room.turn === "NIGHT") {
       return {
         event: SocketEmitEvents.CHAT_TO,
         message: "You can't protect yourself.",
       };
     } else {
-      return {
-        event: SocketEmitEvents.CHAT_TO,
-        message: "You can't do that right now.",
-      };
+      return {};
     }
   },
 
+  //players with this role should start the game with their shield = 2
   "Cyber Brute": async (
     fastify: FastifyInstance,
     target: PlayerWithRoleAndProfile,
     room: Room,
     sender: PlayerWithRoleAndProfile
-  ): Promise<{ event: SocketEmitEvents; message: string }> => {
-    if (target.role.name !== "Cyber Brute" && room.turn === "NIGHT") {
+  ): Promise<{ event?: SocketEmitEvents; message?: string }> => {
+
+    if (room.turn === "NIGHT" && sender.shield > 0) {
       await fastify.prisma.player.update({
         data: {
-          shield: target.shield + 1,
+          isProtected: true,
         },
         where: {
           id: target.id,
         },
       });
-
-      return {
-        event: SocketEmitEvents.CHAT_TO,
-        message: "You protected " + target.index + " " + target.profile.name,
-      };
-    } else if (target.role.name === "Cyber Brute" && room.turn === "NIGHT") {
-      return {
-        event: SocketEmitEvents.CHAT_TO,
-        message: "You chose to protect only yourself.",
-      };
+      
+      //checks if either the target or the cyber brute were attacked and removes a value of the cyber brute's shield  
+      if(target.attacked === true || sender.attacked === true){
+        await fastify.prisma.player.update({
+          data: {
+            shield: sender.shield - 1,
+          },
+          where: {
+            id: sender.id,
+          }
+        })
+        
+        return {
+          event: SocketEmitEvents.CHAT_TO,
+          message: "You protected " + target.index + " " + target.profile.name,
+        };
+        } else {
+          return {};
+        }
     } else {
-      return {
-        event: SocketEmitEvents.CHAT_TO,
-        message: "You can't do that.",
-      };
+return {}
     }
   },
 
@@ -142,6 +153,8 @@ const ROLES_SKILLS = {
         data: {
           alive: true,
           roleVisibility: true,
+          abilityConsumed: true,
+          
         },
         where: {
           id: target.id,
@@ -348,12 +361,16 @@ const ROLES_SKILLS = {
     }
   },
 
-  // "Vigilante Robot": async (
-  //   fastify: FastifyInstance,
-  //   target: PlayerWithRoleAndProfile,
-  //   room: Room,
-  // sender: PlayerWithRoleAndProfile
-  // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
+   "Vigilante Robot": async (
+     fastify: FastifyInstance,
+     target: PlayerWithRoleAndProfile,
+     room: Room,
+   sender: PlayerWithRoleAndProfile
+   ): Promise<{ event: SocketEmitEvents; message: string; }> => {
+    if(target.role.name !== "Vigilante Robot" && room.turn === "DAY" && sender.vigiKill == false && sender.vigiReveal === false) {
+
+    }
+   },
 
   "Hardware Specialist": async (
     fastify: FastifyInstance,

@@ -114,7 +114,8 @@ model Player {
   index                           Int
   voteIn                          Int?
   life                            Int            @default(1)
-  shield                          Int            @default(0)
+  shield                          Int            @default(2)
+  isProtected                     Boolean        @default(false)
   alive                           Boolean        @default(true)
   revived                         Boolean        @default(false)
   online                          Boolean        @default(true)
@@ -142,6 +143,8 @@ model Player {
   checkedByDetective              Boolean        @default(false)
   vigiKill                        Boolean        @default(false)
   vigiReveal                      Boolean        @default(false)
+  abilityConsumed                 Boolean        @default(false)
+  attacked                        Boolean        @default(false)
 }
 
 model Role {
