@@ -138,6 +138,10 @@ model Player {
   attackedBy                      Int? //index do time ou aura de quem matou
   abilitiesEnabled                Boolean        @default(true)
   canVote                         Boolean        @default(true)
+  checkedByAnalyst                Boolean        @default(false)
+  checkedByDetective              Boolean        @default(false)
+  vigiKill                        Boolean        @default(false)
+  vigiReveal                      Boolean        @default(false)
 }
 
 model Role {

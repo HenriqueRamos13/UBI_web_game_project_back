@@ -14,7 +14,7 @@ const ROLES_SKILLS = {
     target: PlayerWithRoleAndProfile,
     room: Room
   ): Promise<{ event: SocketEmitEvents; message: string }> => {
-    if(target.role.name !== "Combat Medic"){
+    if(target.role.name !== "Combat Medic" && room.turn == "NIGHT"){
     await fastify.prisma.player.update({
       data: {
         shield: target.shield + 1,
@@ -26,12 +26,17 @@ const ROLES_SKILLS = {
 
     return {
       event: SocketEmitEvents.CHAT_TO,
-      message: "You protected " + target.index + " " + target.profile.name,
+      message: "You protected " + target.index + " " + target.profile.name + ".",
     };
-  } else {
+  } else if(target.role.name === "Combat Medic" && room.turn === "NIGHT"){
     return {
       event: SocketEmitEvents.CHAT_TO,
       message: "You can't protect yourself."
+    }
+  } else {
+    return {
+      event: SocketEmitEvents.CHAT_TO,
+      message: "You can't do that right now."
     }
   }
   },
@@ -41,7 +46,7 @@ const ROLES_SKILLS = {
      target: PlayerWithRoleAndProfile,
      room: Room
    ): Promise<{ event: SocketEmitEvents; message: string }> => {
-    if(target.role.name !== "Cyber Brute"){
+    if(target.role.name !== "Cyber Brute" && room.turn === "NIGHT"){
     await fastify.prisma.player.update({
       data: {
         shield: target.shield + 1,
@@ -55,10 +60,15 @@ const ROLES_SKILLS = {
       event: SocketEmitEvents.CHAT_TO,
       message: "You protected " + target.index + " " + target.profile.name,
     }
-  } else{
+  } else if(target.role.name === "Cyber Brute" && room.turn === "NIGHT"){
     return {
       event: SocketEmitEvents.CHAT_TO,
       message: "You chose to protect only yourself."
+    }
+  } else{
+    return {
+      event: SocketEmitEvents.CHAT_TO,
+      message: "You can't do that right now."
     }
   }
   },
@@ -68,25 +78,31 @@ const ROLES_SKILLS = {
      target: PlayerWithRoleAndProfile,
      room: Room
      ): Promise<{ event: SocketEmitEvents; message: string }> =>{
-      if(target.role.name !== "Detective"){
-        await fastify.prisma.player
-       .findFirst({
-         where: {
-           id: target.id,
-         },
-         include: {
-           role: true,
-         },
-       })
-         return ({
-           event: SocketEmitEvents.CHAT_TO,
-           message: "You checked " + target.index + " " + target.profile.name + ": " + target.role.name, 
-         });
-      } else {
-        return ({
+      if(target.role.name !== "Detective" && room.turn === "NIGHT" && checkedByDetective === false){
+        await fastify.prisma.$transaction{[
+          fastify.prisma.player.findFirst({
+            where: {
+              id: target.id,
+            },
+            include: {
+              role: true,
+            },
+          })
+        ]}
+        return {
           event: SocketEmitEvents.CHAT_TO,
-          message: "You can't check yourself."
-        })
+          message: "You checked " + target.index + " " + target.profile.name + ": " + target.role.name, 
+        }
+      } else if(target.role.name !== "Detective" && room.turn === "NIGHT" && checkedByDetective === true){
+        return {
+          event: SocketEmitEvents.CHAT_TO,
+          message: "You already checked that player."
+        }
+      } else {
+        return {
+          event: SocketEmitEvents.CHAT_TO,
+          message: "You can't do that."
+        }
       }
      },
 
@@ -95,7 +111,7 @@ const ROLES_SKILLS = {
      target: PlayerWithRoleAndProfile,
      room: Room
    ): Promise<{ event: SocketEmitEvents; message: string }> => {
-    if(target.role.name !== "Tech Contrabandist" && target.role.team === "REBEL" && target.online === true && target.alive === false) {
+    if(target.role.name !== "Tech Contrabandist" && target.role.team === "REBEL" && target.online === true && target.alive === false && room.turn === "NIGHT") {
       await fastify.prisma.player.update({
         data: {
           alive: true,
@@ -113,7 +129,7 @@ const ROLES_SKILLS = {
     } else{
       return {
         event: SocketEmitEvents.CHAT_TO,
-        message: "You can't revive that player"
+        message: "You can't do that."
       }
     }
 
@@ -124,20 +140,42 @@ const ROLES_SKILLS = {
      target: PlayerWithRoleAndProfile,
      room: Room
    ): Promise<{ event: SocketEmitEvents; message: string }> => {
-     await fastify.prisma.player
-       .findFirst({
-         where: {
-           id: target.id,
-         },
-         include: {
-           role: true,
-         },
-       })
+    if(target.role.name !== "Cyber Analyst" && room.turn === "NIGHT" && target.checkedByAnalyst === false){
+       await fastify.prisma.$transaction([
+        fastify.prisma.player.findFirst({
+          where: {
+            id: target.id,
+          },
+          include: {
+            role: true,
+          },
+        }),
+
+        fastify.prisma.player.update({
+          data: {
+            checkedByAnalyst: true,
+          },
+          where: {
+            id: target.id,
+          }
+        })
+      ])
+
          return {
            event: SocketEmitEvents.CHAT_TO,
            message: "You checked " + target.index + " " + target.profile.name + ": " + target.role.aura, 
          };
-       
+      } else if(target.role.name !== "Cyber Analyst" && room.turn === "NIGHT" && target.checkedByAnalyst === true){
+        return {
+          event: SocketEmitEvents.CHAT_TO,
+          message: "You already checked that player.", 
+        };
+      } else {
+        return {
+          event: SocketEmitEvents.CHAT_TO,
+          message: "You can't do that.", 
+        };
+      } 
    },
 
    Interrogator: async (
@@ -145,6 +183,7 @@ const ROLES_SKILLS = {
      target: PlayerWithRoleAndProfile,
      room: Room
    ): Promise<{ event: SocketEmitEvents; message: string }> => {
+    if(target.role.name !== "Interrogator" && room.turn === "DAY"){
     await fastify.prisma.player.update({
       data: {
         isJailed: true,
@@ -158,6 +197,12 @@ const ROLES_SKILLS = {
       event: SocketEmitEvents.CHAT_TO,
       message: "You jailed " + target.index + " " + target.profile.name,
     }
+  } else {
+    return {
+      event: SocketEmitEvents.CHAT_TO,
+      message: "You can't do that.",
+    }
+  }
    },
 
    "Malware Developer": async (
@@ -165,6 +210,7 @@ const ROLES_SKILLS = {
      target: PlayerWithRoleAndProfile,
      room: Room
    ): Promise<{ event: SocketEmitEvents; message: string }> => {
+    if(room.turn === "NIGHT"){
     await fastify.prisma.player.update({
       data: {
         isTrapped: true,
@@ -178,6 +224,12 @@ const ROLES_SKILLS = {
       event: SocketEmitEvents.CHAT_TO,
       message: "You put your trap on " + target.index + " " + target.profile.name,
     }
+  } else {
+    return {
+      event: SocketEmitEvents.CHAT_TO,
+      message: "You can't do that",
+    }
+  }
    },
   
    "Rebel Leader": async (
@@ -185,7 +237,7 @@ const ROLES_SKILLS = {
      target: PlayerWithRoleAndProfile,
      room: Room
    ): Promise<{ event: SocketEmitEvents; message: string }> => {
-    if(target.role.name === "Rebel Leader"){
+    if(target.role.name === "Rebel Leader" && room.turn == "DAY"){
       await fastify.prisma.player.update({
         data: {
           roleVisibility: true,
@@ -197,13 +249,13 @@ const ROLES_SKILLS = {
       })
 
       return{
-        event: SocketEmitEvents.CHAT,
+        event: SocketEmitEvents.CHAT_ALERT,
         message: "Player " + target.index + " " + target.profile.name + " is the Rebel Leader!"
       }
     } else {
       return{
         event: SocketEmitEvents.CHAT_TO,
-        message: "You must select yourself to reveal your ability."
+        message: "You can't do that."
       }
     }
    },
@@ -219,6 +271,7 @@ const ROLES_SKILLS = {
      target: PlayerWithRoleAndProfile,
      room: Room
    ): Promise<{ event: SocketEmitEvents; message: string }> => {
+    if(target.role.name !== "Drug Dealer" && room.turn === "NIGHT"){
     await fastify.prisma.player.update({
       data: {
         isDrugged: true,
@@ -232,6 +285,12 @@ const ROLES_SKILLS = {
       event: SocketEmitEvents.CHAT_TO,
       message: "You drugged " + target.index + " " + target.profile.name,
     }
+  } else {
+    return {
+      event: SocketEmitEvents.CHAT_TO,
+      message: "You can't do that.",
+    }
+  }
    },
 
   // "Vigilante Robot": async (
@@ -240,11 +299,15 @@ const ROLES_SKILLS = {
   //   room: Room
   // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
   
-  // "Hardware Specialist": async (
-  // fastify: FastifyInstance,
-  //   target: PlayerWithRoleAndProfile,
-  //   room: Room
-  // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
+   "Hardware Specialist": async (
+   fastify: FastifyInstance,
+     target: PlayerWithRoleAndProfile,
+     room: Room
+   ): Promise<{ event: SocketEmitEvents; message: string }> => {
+    if(target.role.name !== "Hardware Specialist" && room.turn === "NIGHT"){
+      
+    }
+   },
 
   // "Ethical Hacker": async (
   //   fastify: FastifyInstance,
@@ -368,13 +431,11 @@ const ROLES_SKILLS = {
   //   room: Room
   // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
 
-   Anarchist: async (
-     fastify: FastifyInstance,
-     target: PlayerWithRoleAndProfile,
-     room: Room
-   ): Promise<{ event: SocketEmitEvents; message: string }> => {
-
-   },
+  // Anarchist: async (
+  //  fastify: FastifyInstance,
+  //   target: PlayerWithRoleAndProfile,
+  //   room: Room
+  // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
 
   // "Bounty Hunter": async (
   //   fastify: FastifyInstance,
