@@ -24,14 +24,29 @@ const ROLES_SKILLS = {
 
     return {
       event: SocketEmitEvents.CHAT_TO,
-      message: "Voce protegeu o jogador " + target.profile.name,
+      message: "You protected " + target.index + " " + target.profile.name,
     };
   },
-  // "Cyber Brute": async (
-  //   fastify: FastifyInstance,
-  //   target: PlayerWithRoleAndProfile,
-  //   room: Room
-  // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
+   "Cyber Brute": async (
+   fastify: FastifyInstance,
+     target: PlayerWithRoleAndProfile,
+     room: Room
+   ): Promise<{ event: SocketEmitEvents; message: string }> => {
+    await fastify.prisma.player.update({
+      data: {
+        shield: target.shield + 1,
+      },
+      where: {
+        id: target.id,
+     }
+    });
+
+    return {
+      event: SocketEmitEvents.CHAT_TO,
+      message: "You protected " + target.index + " " + target.profile.name,
+    }
+  },
+
   // Detective: (
   //   fastify: FastifyInstance,
   //   target: PlayerWithRoleAndProfile,
@@ -42,29 +57,28 @@ const ROLES_SKILLS = {
   //   target: PlayerWithRoleAndProfile,
   //   room: Room
   // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
-  // "Cyber Analyst": async (
-  //   fastify: FastifyInstance,
-  //   target: PlayerWithRoleAndProfile,
-  //   room: Room
-  // ): Promise<{ event: SocketEmitEvents; message: string }> => {
-  //   await fastify.prisma.player
-  //     .findFirst({
-  //       where: {
-  //         id: target.id,
-  //       },
-  //       include: {
-  //         role: true,
-  //       },
-  //     })
-  //     .then((player) => {
-  //       return (
-  //         "Voce analisou o jogador " +
-  //         target.profile.name +
-  //         " e ele é " +
-  //         player!.role!.name
-  //       );
-  //     });
-  // },
+  
+   "Cyber Analyst": async (
+     fastify: FastifyInstance,
+     target: PlayerWithRoleAndProfile,
+     room: Room
+   ): Promise<{ event: SocketEmitEvents; message: string }> => {
+     await fastify.prisma.player
+       .findFirst({
+         where: {
+           id: target.id,
+         },
+         include: {
+           role: true,
+         },
+       })
+         return {
+           event: SocketEmitEvents.CHAT_TO,
+           message: "You checked " + target.index + " " + target.profile.name + ": " + target.role.aura, 
+         };
+       
+   },
+
   // Interrogator: async (
   //   fastify: FastifyInstance,
   //   target: PlayerWithRoleAndProfile,
