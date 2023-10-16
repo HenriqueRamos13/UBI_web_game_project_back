@@ -136,6 +136,8 @@ model Player {
   bhTarget                        Boolean        @default(false) //guarda o index do alvo da role 'caçador de recompensas'
   potionReceived                  PotionType?
   attackedBy                      Int? //index do time ou aura de quem matou
+  abilitiesEnabled                Boolean        @default(true)
+  canVote                         Boolean        @default(true)
 }
 
 model Role {
