@@ -750,7 +750,11 @@ function default_1(fastify, opts, done) {
                     Socket.emit(event, `${message}`);
                 }
                 else if (event === SocketEmitEvents.CHAT) {
-                    fastify.io.to(room.id).emit(event, `${message}`);
+                    fastify.io.to(room.id).emit(event, {
+                        message: message,
+                        sender: sender.role.name,
+                        sockId: Socket.id,
+                    });
                 }
                 else {
                 }
