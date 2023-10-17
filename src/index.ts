@@ -32,12 +32,12 @@ interface IHeaders {
 const serverOpts =
   process.env.NODE_ENV === "production"
     ? {
-        http2: true,
-        https: {
-          allowHTTP1: true,
-          key: fs.readFileSync(path.join(__dirname, "pem/", "key.pem")),
-          cert: fs.readFileSync(path.join(__dirname, "pem/", "cert.pem")),
-        },
+        // http2: true,
+        // https: {
+        //   allowHTTP1: true,
+        //   key: fs.readFileSync(path.join(__dirname, "pem/", "key.pem")),
+        //   cert: fs.readFileSync(path.join(__dirname, "pem/", "cert.pem")),
+        // },
       }
     : {
         logger: pino({
@@ -48,7 +48,8 @@ const serverOpts =
 const server = fastify(serverOpts);
 
 server.register(cors, {
-  origin: "http://localhost:3000",
+  // origin: "http://localhost:3000",
+  origin: "https://next-rebel.surge.sh",
   preflightContinue: true,
   credentials: true,
 });
