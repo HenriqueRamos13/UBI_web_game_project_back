@@ -1,6 +1,10 @@
 import * as dotenv from "dotenv";
 dotenv.config();
-import fastify, { FastifyReply, FastifyRequest } from "fastify";
+import fastify, {
+  FastifyReply,
+  FastifyRequest,
+  FastifyServerOptions,
+} from "fastify";
 import path from "path";
 import fs from "fs";
 import pino from "pino";
@@ -29,7 +33,7 @@ interface IHeaders {
   "h-Custom": string;
 }
 
-const serverOpts =
+const serverOpts: FastifyServerOptions =
   process.env.NODE_ENV === "production"
     ? {
         // http2: true,
@@ -38,6 +42,7 @@ const serverOpts =
         //   key: fs.readFileSync(path.join(__dirname, "pem/", "key.pem")),
         //   cert: fs.readFileSync(path.join(__dirname, "pem/", "cert.pem")),
         // },
+        logger: true,
       }
     : {
         logger: pino({
@@ -48,8 +53,10 @@ const serverOpts =
 const server = fastify(serverOpts);
 
 server.register(cors, {
-  // origin: "http://localhost:3000",
-  origin: "https://next-rebel.surge.sh",
+  origin:
+    process.env.NODE_ENV === "production"
+      ? "https://next-rebel.surge.sh"
+      : "http://localhost:3000",
   preflightContinue: true,
   credentials: true,
 });
