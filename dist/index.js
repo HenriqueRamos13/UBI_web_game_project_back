@@ -131,7 +131,7 @@ server.get("/auth", {
     return "Logged";
 }));
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3001;
-server.listen({ port: PORT }, (err, address) => {
+server.listen({ port: PORT, host: "0.0.0.0" }, (err, address) => {
     if (err) {
         server.log.error(err);
         process.exit(1);
