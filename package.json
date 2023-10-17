@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.json && npx prisma generate",
+    "build": "tsc -p tsconfig.json && prisma generate",
     "start": "node dist/index.js",
     "dev": "ts-node-dev --no-notify src/index.ts"
   },
@@ -25,7 +25,8 @@
     "fastify-socket.io": "^5.0.0",
     "jsonwebtoken": "^9.0.2",
     "pino": "^8.15.1",
-    "socket.io": "^4.7.2"
+    "socket.io": "^4.7.2",
+    "prisma": "^5.4.2"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
@@ -33,7 +34,6 @@
     "@types/node": "^20.6.3",
     "@types/pino": "^7.0.5",
     "@types/ws": "^8.5.5",
-    "prisma": "^5.4.2",
     "ts-node": "^10.9.1",
     "ts-node-dev": "^2.0.0",
     "types-fastify-socket.io": "^0.0.1",
