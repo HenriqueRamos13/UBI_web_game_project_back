@@ -39,7 +39,7 @@ exports.SocketOnEvents = exports.SocketEmitEvents = void 0;
 const client_1 = require("@prisma/client");
 const jwt = __importStar(require("jsonwebtoken"));
 const skillController_1 = __importDefault(require("./skillController"));
-const PLAYERS_TO_START_GAME = 6;
+const PLAYERS_TO_START_GAME = 2;
 var SocketEmitEvents;
 (function (SocketEmitEvents) {
     SocketEmitEvents["PONG"] = "pong";
