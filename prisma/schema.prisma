@@ -8,7 +8,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// model Post {
+// model  Post {
 //   id        Int      @id @default(autoincrement())
 //   createdAt DateTime @default(now())
 //   updatedAt DateTime @updatedAt
@@ -114,7 +114,7 @@ model Player {
   index                           Int
   voteIn                          Int?
   life                            Int            @default(1)
-  shield                          Int            @default(2)
+  shield                          Int            @default(1)
   isProtected                     Boolean        @default(false)
   alive                           Boolean        @default(true)
   revived                         Boolean        @default(false)
@@ -145,6 +145,8 @@ model Player {
   vigiReveal                      Boolean        @default(false)
   abilityConsumed                 Boolean        @default(false)
   attacked                        Boolean        @default(false)
+  trapActive                      Boolean        @default(false)
+  //playerTrapped                   String         @default(" ") // ao tentar dar push para db, pede pra dar reset na db
 }
 
 model Role {
