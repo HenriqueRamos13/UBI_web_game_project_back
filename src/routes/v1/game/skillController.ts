@@ -36,9 +36,9 @@ const ROLES_SKILLS = {
           message:
             "You protected " + target.index + " " + target.profile.name + ".",
         };
-      } else {
-        return {};
       }
+
+      return {};
     } else if (
       target.role.name === "Combat Medic" &&
       room.turn === "NIGHT" &&
@@ -50,9 +50,9 @@ const ROLES_SKILLS = {
         event: SocketEmitEvents.CHAT_TO,
         message: "You can't protect yourself.",
       };
-    } else {
-      return {};
     }
+
+    return {};
   },
 
   Detective: async (
@@ -70,15 +70,6 @@ const ROLES_SKILLS = {
       target.alive === true
     ) {
       await fastify.prisma.$transaction([
-        fastify.prisma.player.findFirst({
-          where: {
-            id: target.id,
-          },
-          include: {
-            role: true,
-          },
-        }),
-
         fastify.prisma.player.update({
           data: {
             abilitiesEnabled: false,
@@ -120,9 +111,9 @@ const ROLES_SKILLS = {
         event: SocketEmitEvents.CHAT_TO,
         message: "You already checked that player.",
       };
-    } else {
-      return {};
     }
+
+    return {};
   },
 
   "Tech Contrabandist": async (
@@ -145,7 +136,7 @@ const ROLES_SKILLS = {
         fastify.prisma.player.update({
           data: {
             alive: true,
-            roleVisibility: true,
+            roleVisibility: false,
             canTalk: true,
             canVote: true,
             revived: true,
@@ -175,9 +166,9 @@ const ROLES_SKILLS = {
           target.profile.name +
           " was revived by the Tech Contrabandist.",
       };
-    } else {
-      return {};
     }
+
+    return {};
   },
 
   "Rebel Leader": async (
@@ -212,9 +203,9 @@ const ROLES_SKILLS = {
           sender.profile.name +
           " is the Rebel Leader!",
       };
-    } else {
-      return {};
     }
+
+    return {};
   },
 
   "Chief of Intelligence": async (
@@ -230,25 +221,14 @@ const ROLES_SKILLS = {
       sender.alive === true &&
       target.alive === true
     ) {
-      await fastify.prisma.$transaction([
-        fastify.prisma.player.findFirst({
-          where: {
-            id: target.id,
-          },
-          include: {
-            role: true,
-          },
-        }),
-
-        fastify.prisma.player.update({
-          data: {
-            abilitiesEnabled: false,
-          },
-          where: {
-            id: sender.id,
-          },
-        }),
-      ]);
+      await fastify.prisma.player.update({
+        data: {
+          abilitiesEnabled: false,
+        },
+        where: {
+          id: sender.id,
+        },
+      });
 
       return {
         event: SocketEmitEvents.CHAT,
@@ -261,18 +241,48 @@ const ROLES_SKILLS = {
           target.role.name +
           ".",
       };
-    } else {
-      return {};
     }
+
+    return {};
   },
 
-  // "Government Leader": async (
-  //   fastify: FastifyInstance,
-  //   target: PlayerWithRoleAndProfile,
-  //   room: Room,
-  // sender: PlayerWithRoleAndProfile
-  // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
+  "Government Leader": async (
+    fastify: FastifyInstance,
+    target: PlayerWithRoleAndProfile,
+    room: Room,
+    sender: PlayerWithRoleAndProfile
+  ): Promise<{ event?: SocketEmitEvents; message?: string }> => {
+    if (
+      room.turn === "DAY" &&
+      sender.alive === true &&
+      sender.abilitiesEnabled === true &&
+      sender.abilityConsumed === false
+    ) {
+      await fastify.prisma.player.update({
+        data: {
+          roleVisibility: true,
+          voteWeight: 2,
+          abilitiesEnabled: false,
+          abilityConsumed: true,
+        },
+        where: {
+          id: sender.id,
+        },
+      });
 
+      return {
+        event: SocketEmitEvents.CHAT,
+        message:
+          "Player " +
+          sender.index +
+          sender.profile.name +
+          " is the Government Leader!",
+      };
+    }
+
+    return {};
+  },
+  // EXPLICAR \/
   "Tactical Soldier": async (
     fastify: FastifyInstance,
     target: PlayerWithRoleAndProfile,
@@ -299,9 +309,8 @@ const ROLES_SKILLS = {
           message:
             "The Tactical Soldier was injured and will die next time they are attacked!",
         };
-      } else {
-        return {};
       }
+      return {};
     } else if (
       (sender.alive === true && sender.abilitiesEnabled === true,
       sender.shield === 0)
@@ -321,12 +330,10 @@ const ROLES_SKILLS = {
         });
 
         return {};
-      } else {
-        return {};
       }
-    } else {
       return {};
     }
+    return {};
   },
 
   Instigator: async (
@@ -350,9 +357,6 @@ const ROLES_SKILLS = {
           },
           where: {
             id: target.id,
-          },
-          include: {
-            role: true,
           },
         }),
 
@@ -386,17 +390,10 @@ const ROLES_SKILLS = {
           target.role.name +
           ". There will be no voting today.",
       };
-    } else {
-      return {};
     }
-  },
 
-  // Anarchist: async (
-  //  fastify: FastifyInstance,
-  //   target: PlayerWithRoleAndProfile,
-  //   room: Room,
-  // sender: PlayerWithRoleAndProfile
-  // ): Promise<{ event: SocketEmitEvents; message: string }> => {},
+    return {};
+  },
 
   "Serial Killer": async (
     fastify: FastifyInstance,

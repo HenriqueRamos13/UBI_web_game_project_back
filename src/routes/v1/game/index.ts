@@ -520,6 +520,8 @@ async function eliminatePlayer(
     },
   });
 
+  // TODO: IF ANARCHIST
+
   if (player?.voteProtection && data.voted) {
     await fastify.prisma.player.update({
       where: {
