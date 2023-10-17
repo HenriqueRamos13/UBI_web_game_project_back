@@ -747,7 +747,11 @@ function default_1(fastify, opts, done) {
                 }
                 const { event, message } = yield (0, skillController_1.default)(fastify, sender, target, room);
                 if (event === SocketEmitEvents.CHAT_TO) {
-                    Socket.emit(event, `${message}`);
+                    Socket.emit(event, {
+                        message: message,
+                        sender: sender.role.name,
+                        sockId: Socket.id,
+                    });
                 }
                 else if (event === SocketEmitEvents.CHAT) {
                     fastify.io.to(room.id).emit(event, {
@@ -823,7 +827,7 @@ function default_1(fastify, opts, done) {
                 });
             }));
             Socket.on(SocketOnEvents.CHAT_TO, (data) => {
-                fastify.io.to(data.to).emit(SocketOnEvents.CHAT, {
+                fastify.io.to(data.to).emit(SocketOnEvents.CHAT_TO, {
                     message: data.message,
                     sender: profile.name,
                     sockId: Socket.id,

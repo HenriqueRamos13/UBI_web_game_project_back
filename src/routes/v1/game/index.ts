@@ -863,7 +863,11 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
           );
 
           if (event === SocketEmitEvents.CHAT_TO) {
-            Socket.emit(event, `${message}`);
+            Socket.emit(event, {
+              message: message,
+              sender: sender.role!.name,
+              sockId: Socket.id,
+            });
           } else if (event === SocketEmitEvents.CHAT) {
             fastify.io.to(room!.id).emit(event, {
               message: message,
@@ -958,7 +962,7 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
       Socket.on(
         SocketOnEvents.CHAT_TO,
         (data: { message: string; to: string }) => {
-          fastify.io.to(data.to).emit(SocketOnEvents.CHAT, {
+          fastify.io.to(data.to).emit(SocketOnEvents.CHAT_TO, {
             message: data.message,
             sender: profile!.name,
             sockId: Socket.id,
