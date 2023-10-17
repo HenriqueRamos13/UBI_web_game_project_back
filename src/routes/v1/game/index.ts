@@ -14,7 +14,7 @@ import {
 import * as jwt from "jsonwebtoken";
 import skillController, { PlayerWithRoleAndProfile } from "./skillController";
 
-const PLAYERS_TO_START_GAME = 6;
+const PLAYERS_TO_START_GAME = 2;
 
 export enum SocketEmitEvents {
   PONG = "pong",
