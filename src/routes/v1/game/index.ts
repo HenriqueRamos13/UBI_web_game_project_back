@@ -360,6 +360,11 @@ async function nextTurn(fastify: FastifyInstance, roomId: string) {
   }
 
   if (room.turn === Turn.NIGHT) {
+    const playersReset = await fastify.prisma.player.findMany();
+    for(const player of playersReset){
+      resetNight(fastify, roomId, player.id)
+  }
+
     const players = await fastify.prisma.player.findMany({
       where: {
         roomId: roomId,
@@ -413,6 +418,11 @@ async function nextTurn(fastify: FastifyInstance, roomId: string) {
   }
 
   if (room.turn === Turn.DAY) {
+    const players = await fastify.prisma.player.findMany();
+    for(const player of players){
+      resetDay(fastify,player.id)
+  }
+
     await fastify.prisma.room.update({
       where: {
         id: roomId,
@@ -567,6 +577,86 @@ async function verifyTurn(
     } else {
       return room;
     }
+  }
+}
+
+async function resetDay(
+  fastify: FastifyInstance,
+  playerId: string
+) {
+  const player = await fastify.prisma.player.findUnique({
+    where: {
+      id: playerId,
+    },
+    include: {
+      role: true,
+    }
+  });
+  
+  if(player?.alive === true && player.abilityConsumed === false){
+  await fastify.prisma.player.update({
+    data:{
+      isProtected: false,
+      attacked: false,
+      isJailed: false, 
+      abilitiesEnabled: true,
+    },
+    where: {
+      id: playerId,
+    }
+  })
+}
+}
+
+async function resetNight(
+  fastify: FastifyInstance,
+  roomId: string,
+  playerId: string
+) {
+  const room = await fastify.prisma.room.findUnique({
+    where: {
+      id: roomId,
+    }
+  })
+
+  const player = await fastify.prisma.player.findUnique({
+    where: {
+      id: playerId,
+    },
+    include: {
+      role: true,
+    }
+  });
+
+  await fastify.prisma.room.update({
+    data: {
+      hasVote: true,
+      voteAnon: false,
+    },
+    where: {
+      id: room?.id,
+    }
+  })
+
+  if(player?.alive === true && player?.role?.team === "GOVERNMENT" && player.voteWeight === 2){
+    await fastify.prisma.player.update({
+      data: {
+        voteWeight: 1,
+      },
+      where: {
+        id: playerId,
+      }
+    })
+  } else if(player?.alive === true && player?.role?.team === "REBEL") {
+    await fastify.prisma.player.update({
+      data: {
+        canTalk: true,
+        canVote: true,
+      },
+      where: {
+        id: playerId,
+      }
+    })
   }
 }
 

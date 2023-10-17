@@ -72,6 +72,7 @@ const ROLES_SKILLS = {
       room.turn === "NIGHT" && 
       sender.shield > 0 &&
       sender.abilitiesEnabled === true &&
+      sender.abilityConsumed === false &&
       sender.alive === true &&
       target.alive === true
       ) {
@@ -106,7 +107,9 @@ const ROLES_SKILLS = {
       room.turn === "NIGHT" &&
       sender.shield === 0 &&
       sender.alive === true &&
-      target.alive === true
+      target.alive === true &&
+      sender.abilityConsumed === false &&
+      sender.abilitiesEnabled === true
     ){
       await fastify.prisma.player.update({
         data: {
@@ -114,7 +117,8 @@ const ROLES_SKILLS = {
           canTalk: false,
           canVote: false,
           abilitiesEnabled: false,
-          roleVisibility: true
+          roleVisibility: true,
+          abilityConsumed: true,
         },
         where: {
           id: sender.id,
@@ -141,7 +145,7 @@ const ROLES_SKILLS = {
       target.alive === true
     ) {
       await fastify.prisma.$transaction([
-        fastify.prisma.player.findFirst({
+         fastify.prisma.player.findFirst({
           where: {
             id: target.id,
           },
@@ -149,7 +153,25 @@ const ROLES_SKILLS = {
             role: true,
           },
         }),
-      ]);
+        
+         fastify.prisma.player.update({
+          data: {
+            abilitiesEnabled: false,
+          },
+          where: {
+            id: sender.id,
+          }
+        }),
+
+         fastify.prisma.player.update({
+          data:{
+            checkedByDetective: true,
+          }, 
+          where: {
+            id: target.id,
+          }
+        }),
+      ])
 
       return {
         event: SocketEmitEvents.CHAT_TO,
@@ -190,21 +212,35 @@ const ROLES_SKILLS = {
       target.online === true &&
       target.alive === false &&
       room.turn === "NIGHT" &&
-      sender.abilityConsumed === false &&
       sender.abilitiesEnabled === true &&
+      sender.abilityConsumed === false &&
       sender.alive === true
     ) {
-      await fastify.prisma.player.update({
+      await fastify.prisma.$transaction([
+       fastify.prisma.player.update({
         data: {
           alive: true,
           roleVisibility: true,
-          abilityConsumed: true,
-          
+          canTalk: true,
+          canVote: true,
+          revived: true,
+          abilitiesEnabled: true,
         },
         where: {
           id: target.id,
         },
-      });
+      }),
+
+       fastify.prisma.player.update({
+        data: {
+          abilitiesEnabled: false,
+          abilityConsumed: true,
+        },
+        where: {
+          id: sender.id,
+        },
+      })
+    ])
 
       return {
         event: SocketEmitEvents.CHAT,
@@ -251,6 +287,15 @@ const ROLES_SKILLS = {
             id: target.id,
           },
         }),
+
+        fastify.prisma.player.update({
+          data: {
+            abilitiesEnabled: false,
+          },
+          where: {
+            id: sender.id,
+          }
+        })
       ]);
 
       return {
@@ -321,16 +366,17 @@ const ROLES_SKILLS = {
       sender.alive === true &&
       target.alive === true
     ) {
-      await fastify.prisma.player.update({
+      await fastify.prisma.$transaction([
+       fastify.prisma.player.update({
         data: {
           isTrapped: true,
         },
         where: {
           id: target.id,
         },
-      });
+      }),
   
-      await fastify.prisma.player.update({
+       fastify.prisma.player.update({
         data: {
           trapActive: true,
           playerTrapped: target.profile.name,
@@ -338,7 +384,8 @@ const ROLES_SKILLS = {
         where: {
           id: sender.id,
         },
-      });
+      }),
+    ])
   
       if(sender.profile.name === target.profile.name) {
         return {
@@ -363,23 +410,25 @@ const ROLES_SKILLS = {
       sender.alive === true &&
       target.alive === true
     ) { 
-      await fastify.prisma.player.update({
+      await fastify.prisma.$transaction([
+       fastify.prisma.player.update({
         data: {
           playerTrapped: target.id,
         },
         where: {
           id: sender.id,
         },
-      });
+      }),
   
-      await fastify.prisma.player.update({
+       fastify.prisma.player.update({
         data: {
           isTrapped: true,
         },
         where: {
           id: target.id,
         },
-      });
+      }),
+    ])
   
       return {
         event: SocketEmitEvents.CHAT_TO,
@@ -398,16 +447,17 @@ const ROLES_SKILLS = {
       sender.alive === true &&
       target.alive === true
     ) {
-      await fastify.prisma.player.update({
+      await fastify.prisma.$transaction([
+       fastify.prisma.player.update({
         data: {
           isTrapped: false,
         }, 
         where: {
           id: target.id,
         }
-      });
+      }),
   
-      await fastify.prisma.player.update({
+       fastify.prisma.player.update({
         data: {
           trapActive: false,
           playerTrapped: " ",
@@ -415,7 +465,8 @@ const ROLES_SKILLS = {
         where: {
           id: sender.id,
         }
-      });
+      }),
+    ])
   
       return {
         event: SocketEmitEvents.CHAT_TO,
@@ -433,12 +484,16 @@ const ROLES_SKILLS = {
   ): Promise<{ event?: SocketEmitEvents; message?: string }> => {
     if(
       room.turn === "DAY" &&
-      sender.alive === true 
+      sender.alive === true &&
+      sender.abilitiesEnabled === true &&
+      sender.abilityConsumed === false
     ){
       await fastify.prisma.player.update({
         data: {
           roleVisibility: true,
           voteWeight: 2,
+          abilitiesEnabled: false,
+          abilityConsumed: true,
         },
         where: {
           id: sender.id,
@@ -478,7 +533,8 @@ const ROLES_SKILLS = {
       sender.alive === true &&
       target.alive === true
       ) {
-      await fastify.prisma.player.update({
+        await fastify.prisma.$transaction([
+        fastify.prisma.player.update({
         data: {
           isDrugged: true,
           canTalk: false,
@@ -487,7 +543,17 @@ const ROLES_SKILLS = {
         where: {
           id: target.id,
         },
-      });
+      }),
+
+        fastify.prisma.player.update({
+          data: {
+            abilitiesEnabled: false,
+          },
+          where: {
+            id: sender.id,
+          }
+        })
+    ])
 
       return {
         event: SocketEmitEvents.CHAT_TO,
@@ -528,7 +594,9 @@ const ROLES_SKILLS = {
         target.role.team === "GOVERNMENT" && 
         room.turn === "NIGHT" &&
         sender.alive === true &&
-        target.alive === true
+        target.alive === true &&
+        sender.abilitiesEnabled === true &&
+        sender.abilityConsumed === false
         ) {
           await fastify.prisma.player.update({
             data: {
@@ -559,11 +627,14 @@ const ROLES_SKILLS = {
         target.role.team === "REBEL" && 
         room.turn === "NIGHT" &&
         sender.alive === true &&
-        target.alive === true
+        target.alive === true &&
+        sender.abilitiesEnabled === true &&
+        sender.abilityConsumed === false
         ){
           await fastify.prisma.player.update({
             data: {
               isProtected: true,
+              abilitiesEnabled: false,
             },
             where: {
               id: sender.id,
@@ -588,29 +659,34 @@ const ROLES_SKILLS = {
     if(
       target.role.name !== "Ethical Hacker" &&
       sender.alive === true &&
-      target.alive === true
+      target.alive === true &&
+      sender.abilitiesEnabled === true &&
+      sender.abilityConsumed === false
     ) {
-      await fastify.prisma.player.update({
+      await fastify.prisma.$transaction([
+       fastify.prisma.player.update({
         data: {
           roleVisibility: true,
         },
         where: {
           id: target.id,
         }
-      });
+      }),
 
-      await fastify.prisma.player.update({
+       fastify.prisma.player.update({
         data: {
           alive: false,
           canTalk: false,
           canVote: false,
           roleVisibility: true,
           abilitiesEnabled: false,
+          abilityConsumed: true,
         },
         where: {
           id: sender.id,
         }
-      })
+      }),
+    ])
 
       return {
         event: SocketEmitEvents.CHAT,
@@ -639,16 +715,31 @@ const ROLES_SKILLS = {
       target.role.team !== "GOVERNMENT" &&
       room.turn === "DAY" &&
       sender.alive === true &&
-      target.alive === true
+      target.alive === true &&
+      sender.abilitiesEnabled === true &&
+      sender.abilityConsumed === false &&
+      sender.abilitiesAvailable > 0
     ) {
-      await fastify.prisma.player.update({
-        data: {
-          abilitiesEnabled: false,
-        },
-        where: {
-          id: target.id,
-        },
-      });
+      await fastify.prisma.$transaction([
+        fastify.prisma.player.update({
+          data: {
+            abilitiesEnabled: false,
+          },
+          where: {
+            id: target.id,
+          },
+      }),
+
+        fastify.prisma.player.update({
+          data: {
+            abilitiesEnabled: false,
+            abilityAvailable: sender.abilityAvailable - 1,
+          },
+          where: {
+            id: sender.id,
+          }
+        })
+    ])
 
       return {
         event: SocketEmitEvents.CHAT_TO,
@@ -659,8 +750,25 @@ const ROLES_SKILLS = {
           target.profile.name +
           "'s abilities for the night.",
       };
-    } else {
+    } else if(
+      room.turn === "DAY" &&
+      sender.alive === true &&
+      sender.abilitiesEnabled === true &&
+      sender.abilityConsumed === false &&
+      sender.abilitiesAvailable === 0
+      ){
+        await fastify.prisma.player.update({
+          data: {
+            abilitiesEnabled: false,
+            abilityConsumed: true,
+          },
+          where: {
+            id: sender.id,
+          }
+        })
       return {};
+    } else {
+      return{};
     }
   },
 
@@ -677,14 +785,26 @@ const ROLES_SKILLS = {
       sender.alive === true &&
       target.alive === true
     ) {
-      await fastify.prisma.player.findFirst({
+      await fastify.prisma.$transaction([
+       fastify.prisma.player.findFirst({
         where: {
           id: target.id,
         },
         include: {
           role: true,
         },
-      });
+      }),
+
+      fastify.prisma.player.update({
+        data: {
+          abilitiesEnabled: false,
+        },
+        where: {
+          id: sender.id,
+        }
+      })
+    ])
+
       return {
         event: SocketEmitEvents.CHAT,
         message:
@@ -780,7 +900,8 @@ const ROLES_SKILLS = {
       target.alive === true &&
       sender.abilitiesEnabled === true
     ) {
-      await fastify.prisma.player.update({
+      await fastify.prisma.$transaction([
+       fastify.prisma.player.update({
         data: {
           roleVisibility: true,
         },
@@ -790,18 +911,19 @@ const ROLES_SKILLS = {
         include: {
           role: true,
         },
-      });
+      }),
 
-      await fastify.prisma.player.update({
+       fastify.prisma.player.update({
         data: {
           abilitiesEnabled: false,
+          abilityConsumed: true,
         },
         where: {
           id: sender.id,
         }
-      })
+      }),
       
-      await fastify.prisma.room.update({
+       fastify.prisma.room.update({
         data:{
           hasVote: false,
         },
@@ -809,7 +931,7 @@ const ROLES_SKILLS = {
           id: room.id,
         }
       })
-
+    ])
       return {
         event: SocketEmitEvents.CHAT,
         message:
@@ -835,7 +957,8 @@ const ROLES_SKILLS = {
     if(
       room.turn === "DAY" &&
       sender.alive === true &&
-      sender.abilitiesEnabled === true
+      sender.abilitiesEnabled === true &&
+      sender.abilityConsumed === false
     ) {
       await fastify.prisma.room.update({
         data: {
@@ -869,6 +992,7 @@ const ROLES_SKILLS = {
       await fastify.prisma.player.update({
         data:{
           abilitiesEnabled: false,
+          abilityConsumed: true,
         },
         where: {
           id: sender.id,
@@ -894,17 +1018,30 @@ const ROLES_SKILLS = {
     if(
       room.turn === "DAY" &&
       sender.alive === true &&
-      target.alive === true 
+      target.alive === true &&
+      sender.abilitiesEnabled === true &&
+      sender.abilityConsumed === false
     ) {
-      await fastify.prisma.player.update({
+      await fastify.prisma.$transaction([
+       fastify.prisma.player.update({
         data:{
           voteProtection: true,
         },
         where: {
           id: target.id,
         }
-      })
+      }),
 
+      fastify.prisma.player.update({
+        data: {
+          abilitiesEnabled: false,
+          abilityConsumed: true,
+        },
+        where: {
+          id: sender.id,
+        }
+      })
+    ])
       //if target is voted during the day and protected, return message to chat letting other players know the target was protected and could not be eliminated.
       return {}
     } else {
@@ -946,20 +1083,30 @@ const ROLES_SKILLS = {
       sender.abilitiesEnabled === true &&
       target.isProtected === false
       ) {
-      await fastify.prisma.player.update({
-        data: {
-          attacked: true,
-          alive: false,
-          canTalk: false,
-          canVote: false,
-          abilitiesEnabled: false,
-          roleVisibility: true,
-        },
-        where: {
-          id: target.id,
-        },
-      });
+        await fastify.prisma.$transaction([
+         fastify.prisma.player.update({
+          data: {
+            attacked: true,
+            alive: false,
+            canTalk: false,
+            canVote: false,
+            abilitiesEnabled: false,
+            roleVisibility: true,
+          },
+           where: {
+            id: target.id,
+          },
+        }),
 
+        fastify.prisma.player.update({
+          data: {
+            abilitiesEnabled: false,
+          },
+          where: {
+            id: sender.id,
+          }
+        })
+    ])
       return {
         event: SocketEmitEvents.CHAT,
         message:
@@ -987,7 +1134,8 @@ const ROLES_SKILLS = {
       sender.abilitiesEnabled === true &&
       target.isProtected === false
       ) {
-      await fastify.prisma.player.update({
+      await fastify.prisma.$transaction([
+        fastify.prisma.player.update({
         data: {
           canTalk: false,
           canVote: false,
@@ -995,8 +1143,17 @@ const ROLES_SKILLS = {
         where: {
           id: target.id,
         },
-      });
+      }),
 
+      fastify.prisma.player.update({
+        data: {
+          abilitiesEnabled: false,
+        },
+        where: {
+          id: sender.id,
+        }
+      })
+    ])
       return {
         event: SocketEmitEvents.CHAT_TO,
         message:
