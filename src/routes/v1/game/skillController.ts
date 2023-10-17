@@ -556,9 +556,12 @@ const ROLES_SKILLS = {
     ])
 
       return {
-        event: SocketEmitEvents.CHAT_TO,
-        message: "You drugged " + target.index + " " + target.profile.name,
-        //adicionar mensagem avisando o jogador que foi drogado que poderá morrer 
+        event: SocketEmitEvents.CHAT,
+        message: "Player " + 
+        target.index + 
+        " " + 
+        target.profile.name +
+        " was drugged and can't talk or vote today. They have 50% chance of dying at the end of the day.",
       };
     } else {
       return {};

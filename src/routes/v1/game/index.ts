@@ -362,7 +362,8 @@ async function nextTurn(fastify: FastifyInstance, roomId: string) {
   if (room.turn === Turn.NIGHT) {
     const playersReset = await fastify.prisma.player.findMany();
     for(const player of playersReset){
-      resetNight(fastify, roomId, player.id)
+      await resetNight(fastify, roomId, player.id)
+      await checkIfDrugged(fastify, player.id)
   }
 
     const players = await fastify.prisma.player.findMany({
@@ -420,7 +421,7 @@ async function nextTurn(fastify: FastifyInstance, roomId: string) {
   if (room.turn === Turn.DAY) {
     const players = await fastify.prisma.player.findMany();
     for(const player of players){
-      resetDay(fastify,player.id)
+      await resetDay(fastify,player.id)
   }
 
     await fastify.prisma.room.update({
@@ -658,6 +659,53 @@ async function resetNight(
       }
     })
   }
+}
+
+async function checkIfDrugged(
+  fastify: FastifyInstance,
+  playerId: string,
+){
+  const player = await fastify.prisma.player.findUnique({
+    where: {
+      id: playerId,
+    },
+  });
+
+  if(player?.isDrugged === true) {
+
+    const death = Math.random();
+
+    const probability = 0.5;
+
+    if(death<probability){
+    await fastify.prisma.player.update({
+      data: {
+        alive: false,
+        canTalk: false,
+        canVote: false,
+        roleVisibility: true,
+        abilitiesEnabled: false,
+      },
+      where: {
+        id: playerId
+      }
+    })
+
+    //mensagem para o chat avisando que o jogador morreu
+  } else{
+    await fastify.prisma.player.update({
+      data: {
+        isDrugged: false,
+      },
+      where: {
+        id: playerId,
+      }
+    })
+
+    // mensagem para o chat avisando que o jogador sobreviveu
+  } 
+  }
+ 
 }
 
 async function verifySocketId(
