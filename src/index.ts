@@ -143,7 +143,9 @@ server.get<{
   }
 );
 
-server.listen({ port: 3001 }, (err, address) => {
+const PORT: number = process.env.PORT ? Number(process.env.PORT) : 3001;
+
+server.listen({ port: PORT }, (err, address) => {
   if (err) {
     server.log.error(err);
     process.exit(1);
