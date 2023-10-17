@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.json -w",
+    "build": "tsc -p tsconfig.json && npx prisma generate",
     "start": "node dist/index.js",
     "dev": "ts-node-dev --no-notify src/index.ts"
   },
