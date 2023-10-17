@@ -38,8 +38,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv = __importStar(require("dotenv"));
 dotenv.config();
 const fastify_1 = __importDefault(require("fastify"));
-const path_1 = __importDefault(require("path"));
-const fs_1 = __importDefault(require("fs"));
 const pino_1 = __importDefault(require("pino"));
 // import { FastifyRedis } from "@fastify/redis";
 const cors_1 = __importDefault(require("@fastify/cors"));
@@ -50,12 +48,13 @@ const fastify_prisma_client_1 = __importDefault(require("fastify-prisma-client")
 const socket_1 = __importDefault(require("./plugins/socket"));
 const serverOpts = process.env.NODE_ENV === "production"
     ? {
-        http2: true,
-        https: {
-            allowHTTP1: true,
-            key: fs_1.default.readFileSync(path_1.default.join(__dirname, "pem/", "key.pem")),
-            cert: fs_1.default.readFileSync(path_1.default.join(__dirname, "pem/", "cert.pem")),
-        },
+        // http2: true,
+        // https: {
+        //   allowHTTP1: true,
+        //   key: fs.readFileSync(path.join(__dirname, "pem/", "key.pem")),
+        //   cert: fs.readFileSync(path.join(__dirname, "pem/", "cert.pem")),
+        // },
+        logger: true,
     }
     : {
         logger: (0, pino_1.default)({
@@ -64,7 +63,9 @@ const serverOpts = process.env.NODE_ENV === "production"
     };
 const server = (0, fastify_1.default)(serverOpts);
 server.register(cors_1.default, {
-    origin: "http://localhost:3000",
+    origin: process.env.NODE_ENV === "production"
+        ? "https://next-rebel.surge.sh"
+        : "http://localhost:3000",
     preflightContinue: true,
     credentials: true,
 });
@@ -129,7 +130,8 @@ server.get("/auth", {
     console.log(hCustom, username);
     return "Logged";
 }));
-server.listen({ port: 3001 }, (err, address) => {
+const PORT = process.env.PORT ? Number(process.env.PORT) : 3001;
+server.listen({ port: PORT }, (err, address) => {
     if (err) {
         server.log.error(err);
         process.exit(1);
