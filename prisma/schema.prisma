@@ -146,7 +146,7 @@ model Player {
   abilityConsumed                 Boolean        @default(false)
   attacked                        Boolean        @default(false)
   trapActive                      Boolean        @default(false)
-  //playerTrapped                   String         @default(" ") // ao tentar dar push para db, pede pra dar reset na db
+  playerTrapped                   String?
 }
 
 model Role {
