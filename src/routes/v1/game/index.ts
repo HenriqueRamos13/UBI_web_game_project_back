@@ -485,7 +485,7 @@ async function eliminatePlayer(
           id: playerId,
         },
         data: {
-          tacticalSoldierAttacked: true,
+          soldierAttacked: true,
         },
       });
     }
