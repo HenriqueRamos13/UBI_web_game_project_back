@@ -39,7 +39,7 @@ exports.SocketOnEvents = exports.SocketEmitEvents = void 0;
 const client_1 = require("@prisma/client");
 const jwt = __importStar(require("jsonwebtoken"));
 const skillController_1 = __importDefault(require("./skillController"));
-const PLAYERS_TO_START_GAME = 3;
+const PLAYERS_TO_START_GAME = 2;
 var SocketEmitEvents;
 (function (SocketEmitEvents) {
     SocketEmitEvents["PONG"] = "pong";
@@ -49,6 +49,7 @@ var SocketEmitEvents;
     SocketEmitEvents["CHAT_ALERT"] = "chat-alert";
     SocketEmitEvents["CHAT_TO"] = "chat-to";
     SocketEmitEvents["CHAT"] = "chat";
+    SocketEmitEvents["CHAT_NIGHT"] = "chat-night";
 })(SocketEmitEvents || (exports.SocketEmitEvents = SocketEmitEvents = {}));
 var SocketOnEvents;
 (function (SocketOnEvents) {
@@ -178,48 +179,7 @@ function getRandomInt(max) {
 }
 function startGame(fastify, Socket, room, players) {
     return __awaiter(this, void 0, void 0, function* () {
-        const soloRoles = yield fastify.prisma.role.findMany({
-            where: {
-                team: client_1.Team.SOLO,
-            },
-        });
-        const governmentRoles = yield fastify.prisma.role.findMany({
-            where: {
-                team: client_1.Team.GOVERNMENT,
-            },
-        });
-        const rebelRoles = yield fastify.prisma.role.findMany({
-            where: {
-                team: client_1.Team.REBEL,
-            },
-        });
-        const selectedSoloRoles = [];
-        const selectedGovernmentRoles = [];
-        const selectedRebelRoles = [];
-        for (let i = 0; i < PLAYERS_TO_START_GAME; i++) {
-            if (i < 2) {
-                const randomSolo = soloRoles[getRandomInt(soloRoles.length)];
-                soloRoles.splice(soloRoles.findIndex((role) => role.id === randomSolo.id), 1);
-                selectedSoloRoles.push(randomSolo);
-            }
-            if (i >= 2) {
-                if (selectedGovernmentRoles.length < selectedRebelRoles.length) {
-                    const randomGovernment = governmentRoles[getRandomInt(governmentRoles.length)];
-                    governmentRoles.splice(governmentRoles.findIndex((role) => role.id === randomGovernment.id), 1);
-                    selectedGovernmentRoles.push(randomGovernment);
-                }
-                else {
-                    const randomRebel = rebelRoles[getRandomInt(rebelRoles.length)];
-                    rebelRoles.splice(rebelRoles.findIndex((role) => role.id === randomRebel.id), 1);
-                    selectedRebelRoles.push(randomRebel);
-                }
-            }
-        }
-        const roles = [
-            ...selectedSoloRoles,
-            ...selectedGovernmentRoles,
-            ...selectedRebelRoles,
-        ];
+        const roles = yield fastify.prisma.role.findMany({});
         const shuffledRoles = roles.sort(() => Math.random() - 0.5);
         const playersWithRoles = players.map((player, index) => {
             return Object.assign(Object.assign({}, player), { role: shuffledRoles[index] });
@@ -252,7 +212,7 @@ function verifyIfGameEnded(fastify, roomId) {
                 },
             },
         });
-        if (!room) {
+        if (!room || room.finished) {
             return;
         }
         const alivePlayers = room.players.filter((player) => player.alive === true);
@@ -328,11 +288,7 @@ function nextTurn(fastify, roomId) {
             });
         }
         if (room.turn === client_1.Turn.NIGHT) {
-            const playersReset = yield fastify.prisma.player.findMany();
-            for (const player of playersReset) {
-                yield resetNight(fastify, roomId, player.id);
-                yield checkIfDrugged(fastify, player.id);
-            }
+            yield resetNight(fastify, roomId);
             const players = yield fastify.prisma.player.findMany({
                 where: {
                     roomId: roomId,
@@ -363,8 +319,8 @@ function nextTurn(fastify, roomId) {
                 yield eliminatePlayer(fastify, playerMostVoted.id, {
                     voted: true,
                 });
-                yield verifyIfGameEnded(fastify, roomId);
             }
+            yield verifyIfGameEnded(fastify, roomId);
             yield fastify.prisma.room.update({
                 where: {
                     id: roomId,
@@ -391,6 +347,7 @@ function nextTurn(fastify, roomId) {
                     turn: client_1.Turn.VOTE,
                 },
             });
+            yield verifyIfGameEnded(fastify, roomId);
         }
         if (room.turn === client_1.Turn.VOTE) {
             const players = yield fastify.prisma.player.findMany({
@@ -423,8 +380,8 @@ function nextTurn(fastify, roomId) {
                 yield eliminatePlayer(fastify, playerMostVoted.id, {
                     voted: true,
                 });
-                yield verifyIfGameEnded(fastify, roomId);
             }
+            yield verifyIfGameEnded(fastify, roomId);
             yield yield fastify.prisma.room.update({
                 where: {
                     id: roomId,
@@ -455,12 +412,35 @@ function nextTurn(fastify, roomId) {
     });
 }
 function eliminatePlayer(fastify, playerId, data) {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         const player = yield fastify.prisma.player.findUnique({
             where: {
                 id: playerId,
             },
+            include: {
+                role: true,
+            },
         });
+        if (!player) {
+            return;
+        }
+        if (((_a = player.role) === null || _a === void 0 ? void 0 : _a.name) === "Anarchist" && data.voted) {
+            yield fastify.prisma.player.updateMany({
+                where: {
+                    roomId: player.roomId,
+                    role: {
+                        name: {
+                            not: "Anarchist",
+                        },
+                    },
+                },
+                data: {
+                    alive: false,
+                },
+            });
+            return yield verifyIfGameEnded(fastify, player.roomId);
+        }
         if ((player === null || player === void 0 ? void 0 : player.voteProtection) && data.voted) {
             yield fastify.prisma.player.update({
                 where: {
@@ -491,7 +471,7 @@ function verifyTurn(fastify, roomId, Socket) {
                 id: roomId,
             },
         });
-        if (!room) {
+        if (!room || room.finished) {
             return;
         }
         if (room.startedAt) {
@@ -535,93 +515,31 @@ function resetDay(fastify, playerId) {
         }
     });
 }
-function resetNight(fastify, roomId, playerId) {
-    var _a, _b;
+function resetNight(fastify, roomId) {
     return __awaiter(this, void 0, void 0, function* () {
-        const room = yield fastify.prisma.room.findUnique({
-            where: {
-                id: roomId,
-            },
-        });
-        const player = yield fastify.prisma.player.findUnique({
-            where: {
-                id: playerId,
-            },
-            include: {
-                role: true,
-            },
-        });
-        yield fastify.prisma.room.update({
-            data: {
-                hasVote: true,
-                voteAnon: false,
-            },
-            where: {
-                id: room === null || room === void 0 ? void 0 : room.id,
-            },
-        });
-        if ((player === null || player === void 0 ? void 0 : player.alive) === true &&
-            ((_a = player === null || player === void 0 ? void 0 : player.role) === null || _a === void 0 ? void 0 : _a.team) === "GOVERNMENT" &&
-            player.voteWeight === 2) {
-            yield fastify.prisma.player.update({
+        yield fastify.prisma.$transaction([
+            fastify.prisma.room.update({
+                data: {
+                    hasVote: true,
+                    voteAnon: false,
+                },
+                where: {
+                    id: roomId,
+                },
+            }),
+            fastify.prisma.player.updateMany({
                 data: {
                     voteWeight: 1,
-                },
-                where: {
-                    id: playerId,
-                },
-            });
-        }
-        else if ((player === null || player === void 0 ? void 0 : player.alive) === true && ((_b = player === null || player === void 0 ? void 0 : player.role) === null || _b === void 0 ? void 0 : _b.team) === "REBEL") {
-            yield fastify.prisma.player.update({
-                data: {
                     canTalk: true,
                     canVote: true,
+                    voteIn: null,
                 },
                 where: {
-                    id: playerId,
+                    roomId: roomId,
+                    alive: true,
                 },
-            });
-        }
-    });
-}
-function checkIfDrugged(fastify, playerId) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const player = yield fastify.prisma.player.findUnique({
-            where: {
-                id: playerId,
-            },
-        });
-        if ((player === null || player === void 0 ? void 0 : player.isDrugged) === true) {
-            const death = Math.random();
-            const probability = 0.5;
-            if (death < probability) {
-                yield fastify.prisma.player.update({
-                    data: {
-                        alive: false,
-                        canTalk: false,
-                        canVote: false,
-                        roleVisibility: true,
-                        abilitiesEnabled: false,
-                    },
-                    where: {
-                        id: playerId,
-                    },
-                });
-                //mensagem para o chat avisando que o jogador morreu
-            }
-            else {
-                yield fastify.prisma.player.update({
-                    data: {
-                        isDrugged: false,
-                    },
-                    where: {
-                        id: playerId,
-                    },
-                });
-                // mensagem para o chat avisando que o jogador sobreviveu
-            }
-        }
+            }),
+        ]);
     });
 }
 function verifySocketId(fastify, socketId, profileId) {
@@ -760,7 +678,17 @@ function default_1(fastify, opts, done) {
                         sockId: Socket.id,
                     });
                 }
-                else {
+                else if (event === SocketEmitEvents.CHAT_NIGHT) {
+                    fastify.io.to(room.id).emit(event, {
+                        message: message,
+                        sender: sender.role.name,
+                        sockId: Socket.id,
+                    });
+                }
+                if (event || message) {
+                    fastify.io
+                        .to(room.id)
+                        .emit(SocketEmitEvents.PLAYERS, yield getRoomPlayers(fastify, room.id));
                 }
             }));
             Socket.on(SocketOnEvents.VOTE, (data) => __awaiter(this, void 0, void 0, function* () {
