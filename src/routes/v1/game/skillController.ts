@@ -16,7 +16,7 @@ const ROLES_SKILLS = {
   ): Promise<{ event?: SocketEmitEvents; message?: string }> => {
     if (
       target.role.name !== "Combat Medic" &&
-      room.turn == "NIGHT" &&
+      room.turn === "NIGHT" &&
       sender.abilitiesEnabled === true &&
       sender.alive === true &&
       target.alive === true
@@ -231,7 +231,7 @@ const ROLES_SKILLS = {
       });
 
       return {
-        event: SocketEmitEvents.CHAT,
+        event: SocketEmitEvents.CHAT_NIGHT,
         message:
           "The Chief of Intelligence checked " +
           target.index +
@@ -403,11 +403,18 @@ const ROLES_SKILLS = {
   ): Promise<{ event?: SocketEmitEvents; message?: string }> => {
     if (
       target.role.name !== "Serial Killer" &&
+      room.turn === "NIGHT" &&
       target.alive === true &&
       sender.alive === true &&
-      sender.abilitiesEnabled === true &&
-      target.isProtected === false
+      sender.abilitiesEnabled === true
     ) {
+      if (target.isProtected) {
+        return {
+          event: SocketEmitEvents.CHAT_NIGHT,
+          message: `The Serial Killer tried to kill ${target.index} but he was protected.`,
+        };
+      }
+
       await fastify.prisma.$transaction([
         fastify.prisma.player.update({
           data: {
@@ -433,7 +440,7 @@ const ROLES_SKILLS = {
         }),
       ]);
       return {
-        event: SocketEmitEvents.CHAT,
+        event: SocketEmitEvents.CHAT_NIGHT,
         message:
           "The Serial Killer killed " +
           target.index +

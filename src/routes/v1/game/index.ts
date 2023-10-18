@@ -14,7 +14,7 @@ import {
 import * as jwt from "jsonwebtoken";
 import skillController, { PlayerWithRoleAndProfile } from "./skillController";
 
-const PLAYERS_TO_START_GAME = 3;
+const PLAYERS_TO_START_GAME = 2;
 
 export enum SocketEmitEvents {
   PONG = "pong",
@@ -24,6 +24,7 @@ export enum SocketEmitEvents {
   CHAT_ALERT = "chat-alert",
   CHAT_TO = "chat-to",
   CHAT = "chat",
+  CHAT_NIGHT = "chat-night",
 }
 
 export enum SocketOnEvents {
@@ -162,70 +163,7 @@ async function startGame(
   room: Room,
   players: Player[]
 ) {
-  const soloRoles = await fastify.prisma.role.findMany({
-    where: {
-      team: Team.SOLO,
-    },
-  });
-
-  const governmentRoles = await fastify.prisma.role.findMany({
-    where: {
-      team: Team.GOVERNMENT,
-    },
-  });
-
-  const rebelRoles = await fastify.prisma.role.findMany({
-    where: {
-      team: Team.REBEL,
-    },
-  });
-
-  const selectedSoloRoles: Role[] = [];
-  const selectedGovernmentRoles: Role[] = [];
-  const selectedRebelRoles: Role[] = [];
-
-  for (let i = 0; i < PLAYERS_TO_START_GAME; i++) {
-    if (i < 2) {
-      const randomSolo = soloRoles[getRandomInt(soloRoles.length)];
-
-      soloRoles.splice(
-        soloRoles.findIndex((role: Role) => role.id === randomSolo.id),
-        1
-      );
-
-      selectedSoloRoles.push(randomSolo);
-    }
-    if (i >= 2) {
-      if (selectedGovernmentRoles.length < selectedRebelRoles.length) {
-        const randomGovernment =
-          governmentRoles[getRandomInt(governmentRoles.length)];
-
-        governmentRoles.splice(
-          governmentRoles.findIndex(
-            (role: Role) => role.id === randomGovernment.id
-          ),
-          1
-        );
-
-        selectedGovernmentRoles.push(randomGovernment);
-      } else {
-        const randomRebel = rebelRoles[getRandomInt(rebelRoles.length)];
-
-        rebelRoles.splice(
-          rebelRoles.findIndex((role: Role) => role.id === randomRebel.id),
-          1
-        );
-
-        selectedRebelRoles.push(randomRebel);
-      }
-    }
-  }
-
-  const roles = [
-    ...selectedSoloRoles,
-    ...selectedGovernmentRoles,
-    ...selectedRebelRoles,
-  ];
+  const roles = await fastify.prisma.role.findMany({});
 
   const shuffledRoles = roles.sort(() => Math.random() - 0.5);
 
@@ -264,7 +202,7 @@ async function verifyIfGameEnded(fastify: FastifyInstance, roomId: string) {
     },
   });
 
-  if (!room) {
+  if (!room || room.finished) {
     return;
   }
 
@@ -360,11 +298,7 @@ async function nextTurn(fastify: FastifyInstance, roomId: string) {
   }
 
   if (room.turn === Turn.NIGHT) {
-    const playersReset = await fastify.prisma.player.findMany();
-    for (const player of playersReset) {
-      await resetNight(fastify, roomId, player.id);
-      await checkIfDrugged(fastify, player.id);
-    }
+    await resetNight(fastify, roomId);
 
     const players = await fastify.prisma.player.findMany({
       where: {
@@ -518,9 +452,32 @@ async function eliminatePlayer(
     where: {
       id: playerId,
     },
+    include: {
+      role: true,
+    },
   });
 
-  // TODO: IF ANARCHIST
+  if (!player) {
+    return;
+  }
+
+  if (player.role?.name === "Anarchist" && data.voted) {
+    await fastify.prisma.player.updateMany({
+      where: {
+        roomId: player.roomId,
+        role: {
+          name: {
+            not: "Anarchist",
+          },
+        },
+      },
+      data: {
+        alive: false,
+      },
+    });
+
+    return await verifyIfGameEnded(fastify, player.roomId);
+  }
 
   if (player?.voteProtection && data.voted) {
     await fastify.prisma.player.update({
@@ -561,7 +518,7 @@ async function verifyTurn(
     },
   });
 
-  if (!room) {
+  if (!room || room.finished) {
     return;
   }
 
@@ -608,102 +565,30 @@ async function resetDay(fastify: FastifyInstance, playerId: string) {
   }
 }
 
-async function resetNight(
-  fastify: FastifyInstance,
-  roomId: string,
-  playerId: string
-) {
-  const room = await fastify.prisma.room.findUnique({
-    where: {
-      id: roomId,
-    },
-  });
-
-  const player = await fastify.prisma.player.findUnique({
-    where: {
-      id: playerId,
-    },
-    include: {
-      role: true,
-    },
-  });
-
-  await fastify.prisma.room.update({
-    data: {
-      hasVote: true,
-      voteAnon: false,
-    },
-    where: {
-      id: room?.id,
-    },
-  });
-
-  if (
-    player?.alive === true &&
-    player?.role?.team === "GOVERNMENT" &&
-    player.voteWeight === 2
-  ) {
-    await fastify.prisma.player.update({
+async function resetNight(fastify: FastifyInstance, roomId: string) {
+  await fastify.prisma.$transaction([
+    fastify.prisma.room.update({
       data: {
-        voteWeight: 1,
+        hasVote: true,
+        voteAnon: false,
       },
       where: {
-        id: playerId,
+        id: roomId,
       },
-    });
-  } else if (player?.alive === true && player?.role?.team === "REBEL") {
-    await fastify.prisma.player.update({
+    }),
+
+    fastify.prisma.player.updateMany({
       data: {
+        voteWeight: 1,
         canTalk: true,
         canVote: true,
       },
       where: {
-        id: playerId,
+        roomId: roomId,
+        alive: true,
       },
-    });
-  }
-}
-
-async function checkIfDrugged(fastify: FastifyInstance, playerId: string) {
-  const player = await fastify.prisma.player.findUnique({
-    where: {
-      id: playerId,
-    },
-  });
-
-  if (player?.isDrugged === true) {
-    const death = Math.random();
-
-    const probability = 0.5;
-
-    if (death < probability) {
-      await fastify.prisma.player.update({
-        data: {
-          alive: false,
-          canTalk: false,
-          canVote: false,
-          roleVisibility: true,
-          abilitiesEnabled: false,
-        },
-        where: {
-          id: playerId,
-        },
-      });
-
-      //mensagem para o chat avisando que o jogador morreu
-    } else {
-      await fastify.prisma.player.update({
-        data: {
-          isDrugged: false,
-        },
-        where: {
-          id: playerId,
-        },
-      });
-
-      // mensagem para o chat avisando que o jogador sobreviveu
-    }
-  }
+    }),
+  ]);
 }
 
 async function verifySocketId(
@@ -876,7 +761,12 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
               sender: sender.role!.name,
               sockId: Socket.id,
             });
-          } else {
+          } else if (event === SocketEmitEvents.CHAT_NIGHT) {
+            fastify.io.to(room!.id).emit(event, {
+              message: message,
+              sender: sender.role!.name,
+              sockId: Socket.id,
+            });
           }
         }
       );
