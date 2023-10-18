@@ -147,6 +147,7 @@ model Player {
   attacked                        Boolean        @default(false)
   trapActive                      Boolean        @default(false)
   playerTrapped                   String?
+  soldierAttacked                 Boolean        @default(false)
 }
 
 model Role {

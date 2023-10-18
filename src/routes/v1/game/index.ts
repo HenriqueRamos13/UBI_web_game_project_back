@@ -463,6 +463,34 @@ async function eliminatePlayer(
     return;
   }
 
+  if(player.role?.name === "Tactical Soldier") {
+    if(player.soldierAttacked === true){
+      await fastify.prisma.player.update({
+        where: {
+          id: playerId,
+        },
+        data: {
+          alive: false,
+          ...(data.killed
+            ? {
+                attackedBy: data.killed,
+              }
+            : {}),
+          elimination: data.voted ? EliminatedBy.VOTE : EliminatedBy.ATTACK,
+        }
+      });
+    } else {
+      await fastify.prisma.player.update({
+        where: {
+          id: playerId,
+        },
+        data: {
+          tacticalSoldierAttacked: true,
+        },
+      });
+    }
+  }
+
   if (player.role?.name === "Anarchist" && data.voted) {
     await fastify.prisma.player.updateMany({
       where: {
