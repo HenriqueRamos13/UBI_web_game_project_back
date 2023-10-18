@@ -336,9 +336,9 @@ async function nextTurn(fastify: FastifyInstance, roomId: string) {
       await eliminatePlayer(fastify, playerMostVoted!.id, {
         voted: true,
       });
-
-      await verifyIfGameEnded(fastify, roomId);
     }
+
+    await verifyIfGameEnded(fastify, roomId);
 
     await fastify.prisma.room.update({
       where: {
@@ -368,6 +368,8 @@ async function nextTurn(fastify: FastifyInstance, roomId: string) {
         turn: Turn.VOTE,
       },
     });
+
+    await verifyIfGameEnded(fastify, roomId);
   }
 
   if (room.turn === Turn.VOTE) {
@@ -407,9 +409,9 @@ async function nextTurn(fastify: FastifyInstance, roomId: string) {
       await eliminatePlayer(fastify, playerMostVoted!.id, {
         voted: true,
       });
-
-      await verifyIfGameEnded(fastify, roomId);
     }
+
+    await verifyIfGameEnded(fastify, roomId);
 
     await await fastify.prisma.room.update({
       where: {
@@ -582,6 +584,7 @@ async function resetNight(fastify: FastifyInstance, roomId: string) {
         voteWeight: 1,
         canTalk: true,
         canVote: true,
+        voteIn: null,
       },
       where: {
         roomId: roomId,
@@ -767,6 +770,15 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
               sender: sender.role!.name,
               sockId: Socket.id,
             });
+          }
+
+          if (event || message) {
+            fastify.io
+              .to(room!.id)
+              .emit(
+                SocketEmitEvents.PLAYERS,
+                await getRoomPlayers(fastify, room.id)
+              );
           }
         }
       );
