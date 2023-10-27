@@ -36,6 +36,7 @@ export enum SocketOnEvents {
   CHAT_NIGHT = "chat-night",
   CHAT_TO = "chat-to",
   DISCONNECT = "disconnect",
+  UPDATE = "update",
 }
 
 async function createNewPlayer(
@@ -463,8 +464,8 @@ async function eliminatePlayer(
     return;
   }
 
-  if(player.role?.name === "Tactical Soldier") {
-    if(player.soldierAttacked === true){
+  if (player.role?.name === "Tactical Soldier") {
+    if (player.soldierAttacked === true) {
       await fastify.prisma.player.update({
         where: {
           id: playerId,
@@ -477,7 +478,7 @@ async function eliminatePlayer(
               }
             : {}),
           elimination: data.voted ? EliminatedBy.VOTE : EliminatedBy.ATTACK,
-        }
+        },
       });
     } else {
       await fastify.prisma.player.update({
@@ -904,9 +905,18 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
 
       Socket.on(SocketOnEvents.PING, async () => {
         Socket.emit(SocketEmitEvents.PONG);
+        // Socket.emit(
+        //   SocketEmitEvents.ROOM,
+        //   await verifyTurn(fastify, room!.id, Socket)
+        // );
+      });
+
+      Socket.on(SocketOnEvents.UPDATE, async () => {
+        const room = await getRoomBySocketId(fastify, Socket.id);
+        Socket.emit(SocketEmitEvents.ROOM, room!);
         Socket.emit(
-          SocketEmitEvents.ROOM,
-          await verifyTurn(fastify, room!.id, Socket)
+          SocketEmitEvents.PLAYERS,
+          await getRoomPlayers(fastify, room!.id)
         );
       });
 

@@ -38,6 +38,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv = __importStar(require("dotenv"));
 dotenv.config();
 const fastify_1 = __importDefault(require("fastify"));
+const node_path_1 = __importDefault(require("node:path"));
 const pino_1 = __importDefault(require("pino"));
 // import { FastifyRedis } from "@fastify/redis";
 const cors_1 = __importDefault(require("@fastify/cors"));
@@ -62,6 +63,9 @@ const serverOpts = process.env.NODE_ENV === "production"
         }),
     };
 const server = (0, fastify_1.default)(serverOpts);
+server.register(require("@fastify/static"), {
+    root: node_path_1.default.join(__dirname, "public"),
+});
 server.register(cors_1.default, {
     origin: process.env.NODE_ENV === "production"
         ? "https://next-rebel.surge.sh"
@@ -74,8 +78,18 @@ server.register(cookie_1.default, {
 // parseOptions: {
 // }     // options for parsing cookies
 });
+// helmet need to allow all files inside public folder and others imports like tailwindcss
 server.register(helmet_1.default, {
     global: true,
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["*", "'unsafe-inline'", "'unsafe-eval'", "blob:"],
+            imgSrc: ["*", "data:", "validator.swagger.io"],
+            objectSrc: ["'none'"],
+            scriptSrc: ["*", "'unsafe-inline'", "'unsafe-eval'"],
+            styleSrc: ["*", "'unsafe-inline'"],
+        },
+    },
 });
 server.register(rate_limit_1.default, {
     max: 10000,
@@ -107,11 +121,6 @@ server.get("/user/:id", function (req, reply) {
         // return await
     });
 });
-server.decorateRequest("someProp", "hello!");
-server.get("/", (request, reply) => __awaiter(void 0, void 0, void 0, function* () {
-    const { someProp } = request; // need to use declaration merging to add this prop to the request interface
-    return someProp;
-}));
 server.get("/typedRequest", (request, reply) => __awaiter(void 0, void 0, void 0, function* () {
     return request.body.test;
 }));

@@ -5,7 +5,7 @@ import fastify, {
   FastifyRequest,
   FastifyServerOptions,
 } from "fastify";
-import path from "path";
+import path from "node:path";
 import fs from "fs";
 import pino from "pino";
 // import { FastifyRedis } from "@fastify/redis";
@@ -67,6 +67,7 @@ server.register(cookie, {
   // }     // options for parsing cookies
 } as FastifyCookieOptions);
 
+// helmet need to allow all files inside public folder and others imports like tailwindcss
 server.register(helmet, {
   global: true,
 });
@@ -108,12 +109,7 @@ server.get<{
   // return await
 });
 
-server.decorateRequest("someProp", "hello!");
-
-server.get("/", async (request, reply) => {
-  const { someProp } = request; // need to use declaration merging to add this prop to the request interface
-  return someProp;
-});
+// server.get("/", async (request, reply) => {});
 
 type CustomRequest = FastifyRequest<{
   Body: { test: boolean };

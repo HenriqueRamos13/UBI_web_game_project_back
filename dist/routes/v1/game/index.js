@@ -412,7 +412,7 @@ function nextTurn(fastify, roomId) {
     });
 }
 function eliminatePlayer(fastify, playerId, data) {
-    var _a;
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         const player = yield fastify.prisma.player.findUnique({
             where: {
@@ -425,7 +425,31 @@ function eliminatePlayer(fastify, playerId, data) {
         if (!player) {
             return;
         }
-        if (((_a = player.role) === null || _a === void 0 ? void 0 : _a.name) === "Anarchist" && data.voted) {
+        if (((_a = player.role) === null || _a === void 0 ? void 0 : _a.name) === "Tactical Soldier") {
+            if (player.soldierAttacked === true) {
+                yield fastify.prisma.player.update({
+                    where: {
+                        id: playerId,
+                    },
+                    data: Object.assign(Object.assign({ alive: false }, (data.killed
+                        ? {
+                            attackedBy: data.killed,
+                        }
+                        : {})), { elimination: data.voted ? client_1.EliminatedBy.VOTE : client_1.EliminatedBy.ATTACK })
+                });
+            }
+            else {
+                yield fastify.prisma.player.update({
+                    where: {
+                        id: playerId,
+                    },
+                    data: {
+                        soldierAttacked: true,
+                    },
+                });
+            }
+        }
+        if (((_b = player.role) === null || _b === void 0 ? void 0 : _b.name) === "Anarchist" && data.voted) {
             yield fastify.prisma.player.updateMany({
                 where: {
                     roomId: player.roomId,
