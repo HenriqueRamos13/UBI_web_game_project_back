@@ -832,6 +832,10 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
             voteIn: target!.index,
           },
         });
+        
+        const players = await getRoomPlayers(fastify, room!.id);
+
+        fastify.io.to(room!.id).emit(SocketEmitEvents.PLAYERS, players);
       });
 
       Socket.on(SocketOnEvents.CHAT, async (data: { message: string }) => {
@@ -908,6 +912,9 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
           SocketEmitEvents.ROOM,
           await verifyTurn(fastify, room!.id, Socket)
         );
+        const players = await getRoomPlayers(fastify, room!.id);
+
+        fastify.io.to(room!.id).emit(SocketEmitEvents.PLAYERS, players);
       });
 
       Socket.on(SocketOnEvents.DISCONNECT, (data: any) => {
