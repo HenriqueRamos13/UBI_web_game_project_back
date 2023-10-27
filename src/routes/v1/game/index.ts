@@ -754,7 +754,7 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
 
       if (players.length === PLAYERS_TO_START_GAME && !room.startedAt) {
         const roomUpdated = await startGame(fastify, Socket, room, players);
-        Socket.emit(SocketEmitEvents.ROOM, roomUpdated);
+        fastify.io.to(roomUpdated!.id).emit(SocketEmitEvents.ROOM, roomUpdated);
         fastify.io
           .to(roomUpdated!.id)
           .emit(
@@ -833,6 +833,10 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
             voteIn: target!.index,
           },
         });
+
+        const players = await getRoomPlayers(fastify, room!.id);
+
+        fastify.io.to(room!.id).emit(SocketEmitEvents.PLAYERS, players);
       });
 
       Socket.on(SocketOnEvents.CHAT, async (data: { message: string }) => {
@@ -905,15 +909,14 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
 
       Socket.on(SocketOnEvents.PING, async () => {
         Socket.emit(SocketEmitEvents.PONG);
-        // Socket.emit(
-        //   SocketEmitEvents.ROOM,
-        //   await verifyTurn(fastify, room!.id, Socket)
-        // );
       });
 
       Socket.on(SocketOnEvents.UPDATE, async () => {
         const room = await getRoomBySocketId(fastify, Socket.id);
-        Socket.emit(SocketEmitEvents.ROOM, room!);
+        Socket.emit(
+          SocketEmitEvents.ROOM,
+          await verifyTurn(fastify, room!.id, Socket)
+        );
         Socket.emit(
           SocketEmitEvents.PLAYERS,
           await getRoomPlayers(fastify, room!.id)

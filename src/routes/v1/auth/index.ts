@@ -44,7 +44,7 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
           sameSite: "lax",
         });
 
-        reply.code(200).send({ token });
+        reply.code(200).send({ token, id:user.profile.id });
       } else {
         reply.code(400).send({ message: "Invalid credentials" });
       }

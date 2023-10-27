@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
-    "dev": "ts-node-dev --no-notify src/index.ts"
+    "dev": "docker-compose up -d && sleep 10 && ts-node-dev --no-notify src/index.ts",
+    "dump": "docker exec -i back-db-1 mysqldump -u root -proot games > ./prisma/seed.sql"
   },
   "engines": {
     "node": ">=16.0.0"
@@ -18,7 +19,6 @@
     "@fastify/cors": "^8.4.0",
     "@fastify/helmet": "^11.1.1",
     "@fastify/rate-limit": "^8.0.3",
-    "@fastify/static": "^6.11.2",
     "@fastify/websocket": "^8.2.0",
     "@prisma/client": "^5.4.2",
     "bcrypt": "^5.1.1",
@@ -29,8 +29,8 @@
     "fastify-socket.io": "^5.0.0",
     "jsonwebtoken": "^9.0.2",
     "pino": "^8.15.1",
-    "prisma": "^5.4.2",
-    "socket.io": "^4.7.2"
+    "socket.io": "^4.7.2",
+    "prisma": "^5.4.2"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
