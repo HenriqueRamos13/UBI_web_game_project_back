@@ -7,7 +7,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "dev": "docker-compose up -d && sleep 10 && ts-node-dev --no-notify src/index.ts",
-    "dump": "docker exec -i back-db-1 mysqldump -u root -proot games > ./prisma/seed.sql"
+    "dump": "docker exec -i back-db-1 mysqldump -u root -proot games > ./prisma/seed.sql",
+    "larissa": "ts-node-dev --no-notify src/index.ts"
   },
   "engines": {
     "node": ">=16.0.0"
