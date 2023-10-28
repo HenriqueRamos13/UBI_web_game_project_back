@@ -1,0 +1,1 @@
+docker build -t hramos13/game-project-back:latest . && docker push hramos13/game-project-back:latest
