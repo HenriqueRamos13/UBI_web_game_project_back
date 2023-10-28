@@ -54,9 +54,7 @@ const server = fastify(serverOpts);
 
 server.register(cors, {
   origin:
-    process.env.NODE_ENV === "production"
-      ? "https://next-rebel.surge.sh"
-      : "http://localhost:3000",
+    process.env.NODE_ENV === "production" ? "https://next-rebel.surge.sh" : "*",
   preflightContinue: true,
   credentials: true,
 });

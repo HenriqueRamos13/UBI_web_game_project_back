@@ -5,8 +5,9 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: games
+    restart: always
     ports:
       - 3306:3306
-
+    # assim que o container inicia, ele executa os scripts sql que estão na pasta seed
     volumes:
-      - ./prisma:/docker-entrypoint-initdb.d
+      - ./back/prisma/seed:/docker-entrypoint-initdb.d

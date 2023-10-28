@@ -815,6 +815,8 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
       Socket.on(SocketOnEvents.VOTE, async (data: { target: string }) => {
         const room = await getRoomBySocketId(fastify, Socket.id);
 
+        if (!room) return;
+
         if (room?.turn === Turn.DAY) return;
 
         const sender = await getPlayerBySocketId(fastify, Socket.id);
@@ -841,6 +843,9 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
 
       Socket.on(SocketOnEvents.CHAT, async (data: { message: string }) => {
         const room = await getRoomBySocketId(fastify, Socket.id);
+
+        if (!room) return;
+
         if (room?.turn !== Turn.DAY && room?.turn !== Turn.VOTE) {
           return Socket.emit(SocketEmitEvents.CHAT_ALERT, {
             message: "You cant talk now!",
@@ -866,9 +871,12 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
         SocketOnEvents.CHAT_NIGHT,
         async (data: { message: string }) => {
           const room = await getRoomBySocketId(fastify, Socket.id);
+
+          if (!room) return;
+
           if (room?.turn !== Turn.NIGHT) {
             return Socket.emit(SocketEmitEvents.CHAT_ALERT, {
-              message: "You cant talk now!",
+              message: "You cant talk now!1",
             });
           }
           if (
@@ -876,7 +884,7 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
               ?.role?.canTalkNight !== true
           ) {
             return Socket.emit(SocketEmitEvents.CHAT_ALERT, {
-              message: "You cant talk now!",
+              message: "You cant talk now!2",
             });
           }
           if (
@@ -884,7 +892,7 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
               ?.canTalk !== true
           ) {
             return Socket.emit(SocketEmitEvents.CHAT_ALERT, {
-              message: "You cant talk now!",
+              message: "You cant talk now!3",
             });
           }
 
@@ -913,6 +921,7 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
 
       Socket.on(SocketOnEvents.UPDATE, async () => {
         const room = await getRoomBySocketId(fastify, Socket.id);
+        if (!room) return;
         Socket.emit(
           SocketEmitEvents.ROOM,
           await verifyTurn(fastify, room!.id, Socket)

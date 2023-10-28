@@ -62,7 +62,7 @@ function default_1(fastify, opts, done) {
                     secure: process.env.NODE_ENV === "production",
                     sameSite: "lax",
                 });
-                reply.code(200).send({ token });
+                reply.code(200).send({ token, id: user.profile.id });
             }
             else {
                 reply.code(400).send({ message: "Invalid credentials" });
