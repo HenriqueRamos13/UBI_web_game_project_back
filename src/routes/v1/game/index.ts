@@ -896,7 +896,7 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
             });
           }
 
-          fastify.io.to(room!.id).emit(SocketOnEvents.CHAT, {
+          fastify.io.to(room!.id).emit(SocketOnEvents.CHAT_NIGHT, {
             message: data.message,
             sender: profile!.name,
             sockId: Socket.id,
