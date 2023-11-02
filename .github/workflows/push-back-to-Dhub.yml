@@ -1,7 +1,7 @@
 name: Push Back docker image to Dockerhub
 
 on:
-  pull_request: 
+  push: 
     branches: 
       - main
 
