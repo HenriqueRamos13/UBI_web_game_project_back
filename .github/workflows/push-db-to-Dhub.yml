@@ -5,7 +5,8 @@ on:
     branches: [ main ]
 
 jobs:
-  update:
+  push_to_registry:
+    name: Push DB to Dockerhub
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
