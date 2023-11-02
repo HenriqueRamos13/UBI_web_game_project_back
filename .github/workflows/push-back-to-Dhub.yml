@@ -2,7 +2,8 @@ name: Push Back docker image to Dockerhub
 
 on:
   pull_request: 
-    branches: [ 'main' ]
+    branches: 
+      - main
 
 jobs:
   push_to_registry:
