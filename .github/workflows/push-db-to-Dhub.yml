@@ -1,9 +1,8 @@
 name: Push DB docker image to Dockerhub
 
 on:
-    schedule:
-      # sets the action to run daily. You can modify this to run the action more or less frequently
-      - cron: "0 0 * * *"
+  pull_request: 
+    branches: [ 'main' ]
 
 jobs:
   push_to_registry:
