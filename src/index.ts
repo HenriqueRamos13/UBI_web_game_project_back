@@ -8,7 +8,6 @@ import fastify, {
 import path from "node:path";
 import fs from "fs";
 import pino from "pino";
-// import { FastifyRedis } from "@fastify/redis";
 import cors from "@fastify/cors";
 import type { FastifyCookieOptions } from "@fastify/cookie";
 import cookie from "@fastify/cookie";
@@ -18,11 +17,6 @@ import ws from "fastify-socket.io";
 import fastifyPrismaClient from "fastify-prisma-client";
 import fastifySocketIO from "./plugins/socket";
 import { Server } from "socket.io";
-
-// if (!process.env.MONGO_URI) {
-//   console.log("MONGO_URI must be defined");
-//   process.exit(1);
-// }
 
 interface IQuerystring {
   username: string;
