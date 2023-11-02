@@ -23,12 +23,12 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/game-project-back:latest
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/game-project-db:latest
 
       - name: Build and push to Dockerhub
         uses: docker/build-push-action@v3
         with:  
           context: ./prisma
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/game-project-db:latest
           labels: ${{ steps.meta.outputs.labels }}
