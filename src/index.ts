@@ -61,7 +61,6 @@ server.register(cookie, {
   // }     // options for parsing cookies
 } as FastifyCookieOptions);
 
-// helmet need to allow all files inside public folder and others imports like tailwindcss
 server.register(helmet, {
   global: true,
 });
