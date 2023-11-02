@@ -102,8 +102,6 @@ server.get<{
   // return await
 });
 
-// server.get("/", async (request, reply) => {});
-
 type CustomRequest = FastifyRequest<{
   Body: { test: boolean };
 }>;
