@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest } from "fastify";
-import * as bcrypt from "bcrypt";
+import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
 
 type Request = FastifyRequest<{
@@ -44,7 +44,7 @@ export default function (fastify: FastifyInstance, opts: any, done: any) {
           sameSite: "lax",
         });
 
-        reply.code(200).send({ token, id:user.profile.id });
+        reply.code(200).send({ token, id: user.profile.id });
       } else {
         reply.code(400).send({ message: "Invalid credentials" });
       }

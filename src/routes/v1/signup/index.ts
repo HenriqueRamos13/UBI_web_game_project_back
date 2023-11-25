@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest } from "fastify";
-import * as bcrypt from "bcrypt";
+import * as bcrypt from "bcryptjs";
 
 type Request = FastifyRequest<{
   Body: {
