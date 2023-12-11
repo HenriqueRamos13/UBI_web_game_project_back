@@ -47,10 +47,11 @@ const serverOpts: FastifyServerOptions =
 const server = fastify(serverOpts);
 
 server.register(cors, {
-  origin:
-    process.env.NODE_ENV === "production"
-      ? "https://3000-cs-04db2a27-d179-475d-a3c3-f3a240d6b3a2.cs-europe-west1-onse.cloudshell.dev/?authuser=1&redirectedPreviously=true"
-      : "http://localhost:3000",
+  // origin:
+  //   process.env.NODE_ENV === "production"
+  //     ? "https://next-rebel.surge.sh"
+  //     : "http://localhost:3000",
+  origin: "*",
   preflightContinue: true,
   credentials: true,
 });
